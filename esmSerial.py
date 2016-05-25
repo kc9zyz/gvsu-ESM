@@ -15,20 +15,26 @@ class esmSerial():
     def read(self,port):
         return True
 
+    def write(self,port,msg):
+        return True
+
     def uiMicroRxHandler(self,callback):
         while True:
-            if self.read(self.uiMicroPort):
-                self.dprint(ps.serial,'Checking')
+            for port in self.ports:
+                if self.read(port):
+                    self.dprint(ps.serial,'Checking')
             sleep(1)
 
     def init(self,Dprint):
         self.dprint = Dprint.dprint
         dprint = self.dprint
+        self.ports = {}
         # Define serial ports used by the Educational Solar Module
-        uiMicroPort = self.uiMicroPort = serial.Serial() #'/dev/serial/by-id/1'
-        panelMicroPort = self.panelMicroPort = serial.Serial() #'/dev/serial/by-id/2'
-        electronicLoadPort = self.electronicLoadPort = serial.Serial() # '/dev/serial/by-id/3'
-        stringInverterPort = self.stringInverterPort = serial.Serial() #'/dev/ttyAMA0'
+        self.ports[esmSerialPorts.uiMicro] = uiMicroPort = serial.Serial() #'/dev/serial/by-id/1'
+        self.ports[esmSerialPorts.panelMicro] = panelMicroPort = self.panelMicroPort = serial.Serial() #'/dev/serial/by-id/2'
+        self.ports[esmSerialPorts.electronicLoad] = electronicLoadPort = self.electronicLoadPort = serial.Serial() # '/dev/serial/by-id/3'
+        self.ports[esmSerialPorts.stringInverter] = stringInverterPort = serial.Serial() #'/dev/ttyAMA0'
+
 
         # Test the UI Micro Port
         try:
@@ -60,6 +66,8 @@ class esmSerial():
 
         p = Process(target=self.uiMicroRxHandler, args=(self.callback,))
         p.start()
+    def sendSerial(self, port, msg):
+        self.write(self.ports[port],msg)
 
 
 
