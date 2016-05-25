@@ -7,6 +7,10 @@ class esmPrintSource(Enum):
     serialException = [2,'<Serial: SerialException> ']
     serialTimeoutException = [3,'<Serial: SerialTimoutException> ']
 
+    # MPPT
+    mppt = [4,'<MPPT> ']
+    
+
 class esmPrint():
     def dprint(self,source, text):
         if self.init == False:
