@@ -4,3 +4,6 @@ python:
 install: "pip install -r requirements.txt"
 
 script: nosetests
+notifications:
+    email: false
+    slack: solargarden:g4mkRzG6BapfqDOS51Rw2cG6
