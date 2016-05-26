@@ -9,14 +9,17 @@ class esmPrintSource(Enum):
 
     # MPPT
     mppt = [4,'<MPPT> ']
-    
 
 class esmPrint():
+    moduleInit = None
     def dprint(self,source, text):
-        if self.init == False:
+        if self.moduleInit == None:
             print('Need to init');
+            return True
         else:
             print('\n'+source.value[1]+text)
+            return False
 
     def init(self):
-        self.init = True;
+        self.moduleInit = True;
+        return False

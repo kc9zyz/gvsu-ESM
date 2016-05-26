@@ -2,8 +2,10 @@ import unittest
 import esmDCLoad
 import esmPrint
 import esmSerial
+from time import sleep
 
 class TestDCLoadMethods(unittest.TestCase):
+    s = None
     def test_powerPointTrack(self):
         # Instantiate a powerPointTrack
         pp = esmDCLoad.powerPointTrack()
@@ -34,9 +36,18 @@ class TestDCLoadMethods(unittest.TestCase):
         self.assertEqual(pp.all(),[[0,1,2],[0,1,2],[0,1,4]])
 
     def test_trackMPPT(self):
-        self.assertEqual(esmDCLoad.trackMPPT(None,None),-1)
-        self.assertEqual(esmDCLoad.trackMPPT(None,esmPrint.esmPrint()),-1)
-        self.assertNotEqual(esmDCLoad.trackMPPT(esmSerial.esmSerial(),esmPrint.esmPrint()),-1)
+        self.assertTrue(esmDCLoad.trackMPPT(None,None)[0])
+        self.assertTrue(esmDCLoad.trackMPPT(None,esmPrint.esmPrint())[0])
+        self.assertTrue(esmDCLoad.trackMPPT(esmSerial.esmSerial(),esmPrint.esmPrint())[0])
+        self.s = esmSerial.esmSerial()
+        self.s.init(esmPrint.esmPrint())
+        p = esmPrint.esmPrint()
+        p.init()
+        self.assertFalse(esmDCLoad.trackMPPT(self.s,p)[0])
+    def tearDown(self):
+        if self.s is not None:
+            self.s.close()
+
 
 
 

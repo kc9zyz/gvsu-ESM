@@ -10,30 +10,39 @@ class esmSerialPorts(Enum):
     electronicLoad = 2
     stringInverter = 3
 class esmSerial():
+    ports = {}
     def callback(self):
         return
     def read(self,port):
-        return True
+        return None
 
     def write(self,port,msg):
-        return True
+        return None
 
     def uiMicroRxHandler(self,callback):
         while True:
             for port in self.ports:
                 if self.read(port):
-                    self.dprint(ps.serial,'Checking')
+                    self.dprint(ps.serial,'Value Received')
             sleep(1)
+    def serialTasksInit(self):
+        self.uiProc= Process(target=self.uiMicroRxHandler, args=(self.callback,))
+        self.uiProc.start()
+
+    def serialTasksClose(self):
+        # TODO Should switch to message queue for termination
+        # self.uiProc.join()
+        self.uiProc.terminate()
+
 
     def init(self,Dprint):
         self.dprint = Dprint.dprint
         dprint = self.dprint
-        self.ports = {}
         # Define serial ports used by the Educational Solar Module
-        self.ports[esmSerialPorts.uiMicro] = uiMicroPort = serial.Serial() #'/dev/serial/by-id/1'
-        self.ports[esmSerialPorts.panelMicro] = panelMicroPort = self.panelMicroPort = serial.Serial() #'/dev/serial/by-id/2'
-        self.ports[esmSerialPorts.electronicLoad] = electronicLoadPort = self.electronicLoadPort = serial.Serial() # '/dev/serial/by-id/3'
-        self.ports[esmSerialPorts.stringInverter] = stringInverterPort = serial.Serial() #'/dev/ttyAMA0'
+        self.ports[esmSerialPorts.uiMicro]  = serial.Serial() #'/dev/serial/by-id/1'
+        self.ports[esmSerialPorts.panelMicro] = serial.Serial() #'/dev/serial/by-id/2'
+        self.ports[esmSerialPorts.electronicLoad] = serial.Serial() # '/dev/serial/by-id/3'
+        self.ports[esmSerialPorts.stringInverter] = serial.Serial() #'/dev/ttyAMA0'
 
 
         # Test the UI Micro Port
@@ -64,10 +73,17 @@ class esmSerial():
         except NameError:
             dprint(ps.serialNameError,'The String Inverter has not been set up.')
 
-        p = Process(target=self.uiMicroRxHandler, args=(self.callback,))
-        p.start()
+        self.serialTasksInit()
+
+    def close(self):
+        self.serialTasksClose()
+
     def sendSerial(self, port, msg):
+        if not port in self.ports:
+            print("Port not defined")
+            return True
         self.write(self.ports[port],msg)
+        return len(msg)
 
 
 

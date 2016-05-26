@@ -1,9 +1,9 @@
 language: python
-python: 
-    - "3.5"
-install: "pip install -r requirements.txt"
-
-script: nosetests
+python:
+- '3.5'
+install: pip install -r requirements.txt
+script: nosetests --with-cov --cov-config .coveragerc --cov-report term-missing
 notifications:
-    email: false
-    slack: solargarden:g4mkRzG6BapfqDOS51Rw2cG6
+  email: false
+  slack:
+    secure: RhS3cqg98l/l39h4nIpSQOh9n7z8EwlyBtW8bW4bOmSV+Bx27i3WreB5Et/y2GeUuu8UxSflS8d2IjRUoyq7y1hmaaZK2YW3prKS3gyma3/u2jkv0BYCDG/RON8kgi4QZtur0eH77bi76UbpUu6g6TwBh/Dz0vzdMOEtKiZNWQXf23PLMf+alEVyQSxkOQcxuRX4OdxcixZy8RG4tc0CVUpDcWv7kEkRcH//jbePrybOEHd0lq/lBWhXLRnoYNtBaO8QsKfstE8ZEzdRxrzaGqkyJEtmPu2RctorQsf7w6PxeIw7dWdVTWOVmiQuLL30tDLVmCB6V1Q9uR4xMLMiH8ZIV8C/F1HcD9gjZttMO48nOpgOXoQ9zhEY3wjXVX3ZaWwFwsnMzNaOCFAQizNDDtLXEUlDRYNWs0gcpbTGs7LwHJX+R/LXeunCOKD8BveuQspQ9MFW8RXqQZo8UE9RE1LJPwimE/mgScZMffuUBfxve+CSUtphADj4X657pakxOiQ5fD9mO8nYkiQCV7wDdCN5w02Y6ViBQfK9OrTHkW5KZEJfr6TTQy25K63s/VEubAZBSkaAP/9rh7d0iu2UqvOOCEX0u31Sz3PcFg5pjJlLlwkXORF/mFBHSUyYBTtYULr9dy+u5vkvWBb0oDFEG2veLE54OjSCTd+PDLoRMv0=
