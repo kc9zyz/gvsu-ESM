@@ -10,7 +10,7 @@ class esmSerialPorts(Enum):
     electronicLoad = 2
     stringInverter = 3
 class esmSerial():
-    ports = {}
+    uiProc = None
     def callback(self):
         return
     def read(self,port):
@@ -32,58 +32,50 @@ class esmSerial():
     def serialTasksClose(self):
         # TODO Should switch to message queue for termination
         # self.uiProc.join()
-        self.uiProc.terminate()
+        if self.uiProc is not None:
+            self.uiProc.terminate()
+    def initPorts(self,port,location):
+        try:
+            self.ports[port] = serial.Serial()
+        except AttributeError:
+            self.ports = {}
+            self.ports[port] = serial.Serial()
+
 
 
     def init(self,Dprint):
         self.dprint = Dprint.dprint
         dprint = self.dprint
-        # Define serial ports used by the Educational Solar Module
-        self.ports[esmSerialPorts.uiMicro]  = serial.Serial() #'/dev/serial/by-id/1'
-        self.ports[esmSerialPorts.panelMicro] = serial.Serial() #'/dev/serial/by-id/2'
-        self.ports[esmSerialPorts.electronicLoad] = serial.Serial() # '/dev/serial/by-id/3'
-        self.ports[esmSerialPorts.stringInverter] = serial.Serial() #'/dev/ttyAMA0'
-
+        try:
+            self.ports
+        except AttributeError:
+            self.ports = {}
 
         # Test the UI Micro Port
-        try:
-            if uiMicroPort.port == None:
+        for port in esmSerialPorts:
+            try:
+                if self.ports[port].port == None:
+                    dprint(ps.serialNameError,'The User interface Micro has not been set up.')
+            except (NameError,KeyError):
                 dprint(ps.serialNameError,'The User interface Micro has not been set up.')
-        except NameError:
-            dprint(ps.serialNameError,'The User interface Micro has not been set up.')
+                return True
 
-        # Test the Panel Micro Port
-        try:
-            if panelMicroPort.port == None:
-                dprint(ps.serialNameError,'The Panel Measurement Micro has not been set up.')
-        except NameError:
-            dprint(ps.serialNameError,'The Panel Measurement Micro has not been set up.')
-
-        # Test the Electronic Load Port
-        try:
-            if electronicLoadPort.port == None:
-                dprint(ps.serialNameError,'The Electronic Load has not been set up.')
-        except NameError:
-            dprint(ps.serialNameError,'The Electronic Load has not been set up.')
-
-        # Test the String Inverter port
-        try:
-            if stringInverterPort.port == None:
-                dprint(ps.serialNameError,'The String Inverter has not been set up.')
-        except NameError:
-            dprint(ps.serialNameError,'The String Inverter has not been set up.')
 
         self.serialTasksInit()
+        return False
 
     def close(self):
         self.serialTasksClose()
 
     def sendSerial(self, port, msg):
-        if not port in self.ports:
-            print("Port not defined")
+        try:
+            if not port in self.ports:
+                print("Port not defined")
+                return True
+            self.write(self.ports[port],msg)
+            return len(msg)
+        except AttributeError:
             return True
-        self.write(self.ports[port],msg)
-        return len(msg)
 
 
 
