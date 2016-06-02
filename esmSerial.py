@@ -2,6 +2,8 @@ from esmPrint import esmPrintSource as ps
 from enum import Enum
 import serial
 from multiprocessing import Process
+from multiprocessing import Queue
+import queue as Queue2
 from time import sleep
 
 class esmSerialPorts(Enum):
@@ -11,57 +13,48 @@ class esmSerialPorts(Enum):
     stringInverter = 3
 class esmSerial():
     uiProc = None
-    def callback(self):
-        return
     def read(self,port):
         return None
 
     def write(self,port,msg):
         return None
 
-    def uiMicroRxHandler(self,callback):
+    def rxHandler(self,port,callback,queue):
         while True:
-            for port in self.ports:
-                if self.read(port):
-                    self.dprint(ps.serial,'Value Received')
-            sleep(1)
-    def serialTasksInit(self):
-        self.uiProc= Process(target=self.uiMicroRxHandler, args=(self.callback,))
-        self.uiProc.start()
+            if self.read(port):
+                self.dprint(ps.serial,'Value Received')
+            try:
+                item = queue.get_nowait()
+                if item == 'q':
+                    break
+            except Queue2.Empty:
+                pass
+
+            sleep(.1)
 
     def serialTasksClose(self):
         # TODO Should switch to message queue for termination
         # self.uiProc.join()
-        if self.uiProc is not None:
-            self.uiProc.terminate()
-    def initPorts(self,port,location):
-        try:
-            self.ports[port] = serial.Serial()
-        except AttributeError:
-            self.ports = {}
-            self.ports[port] = serial.Serial()
+        for port in self.ports:
+            self.ports[port][2].put('q')
+            self.ports[port][1].join()
 
 
-
-    def init(self,Dprint):
+    def init(self,Dprint,serPorts):
         self.dprint = Dprint.dprint
         dprint = self.dprint
-        try:
-            self.ports
-        except AttributeError:
-            self.ports = {}
 
-        # Test the UI Micro Port
-        for port in esmSerialPorts:
-            try:
-                if self.ports[port].port == None:
-                    dprint(ps.serialNameError,'The User interface Micro has not been set up.')
-            except (NameError,KeyError):
-                dprint(ps.serialNameError,'The User interface Micro has not been set up.')
-                return True
-
-
-        self.serialTasksInit()
+        self.ports = {}
+        for port in serPorts:
+            # Create the port from the tuple provided
+            # 0 - port enum name
+            # 1 - port location
+            # 2 - port callback
+            ser = serial.Serial()
+            queue = Queue()
+            p = Process(target=self.rxHandler,args=(ser,port[2],queue))
+            p.start()
+            self.ports[port[0]] = (ser,p,queue)
         return False
 
     def close(self):

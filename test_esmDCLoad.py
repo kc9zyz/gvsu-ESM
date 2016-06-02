@@ -4,6 +4,10 @@ import esmPrint
 import esmSerial
 from time import sleep
 
+def serCallback(byte):
+    print(byte)
+
+
 class TestDCLoadMethods(unittest.TestCase):
     s = None
     def test_powerPointTrack(self):
@@ -40,13 +44,13 @@ class TestDCLoadMethods(unittest.TestCase):
         self.assertTrue(esmDCLoad.trackMPPT(None,esmPrint.esmPrint())[0])
         self.assertTrue(esmDCLoad.trackMPPT(esmSerial.esmSerial(),esmPrint.esmPrint())[0])
         self.s = esmSerial.esmSerial()
-        self.s.initPorts(esmSerial.esmSerialPorts.uiMicro,"/dev/ptyp1")
-        self.s.initPorts(esmSerial.esmSerialPorts.panelMicro,"/dev/ptyp2")
-        self.s.initPorts(esmSerial.esmSerialPorts.electronicLoad,"/dev/ptyp3")
-        self.s.initPorts(esmSerial.esmSerialPorts.stringInverter,"/dev/ptyp4")
-        self.s.init(esmPrint.esmPrint())
         p = esmPrint.esmPrint()
         p.init()
+        serPorts = [(esmSerial.esmSerialPorts.uiMicro,"/dev/ptyp1", serCallback),
+                    (esmSerial.esmSerialPorts.panelMicro,"/dev/ptyp2", serCallback),
+                    (esmSerial.esmSerialPorts.electronicLoad,"/dev/ptyp3", serCallback),
+                    (esmSerial.esmSerialPorts.stringInverter,"/dev/ptyp4", serCallback)]
+        self.assertFalse(self.s.init(p,serPorts))
         self.assertFalse(esmDCLoad.trackMPPT(self.s,p)[0])
     def tearDown(self):
         if self.s is not None:
