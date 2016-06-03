@@ -17,9 +17,16 @@ class esmPrint():
             print('Need to init');
             return True
         else:
-            print('\n'+source.value[1]+text)
+            if self.toFile == True:
+                #write to file
+                pass
+            else:
+                print('\n'+source.value[1]+text)
             return False
 
-    def init(self):
+    def __init__(self, toFile):
+        if toFile == True:
+            self.toFile = True
+        else:
+            self.toFile = False
         self.moduleInit = True;
-        return False

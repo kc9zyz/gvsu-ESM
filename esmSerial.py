@@ -3,6 +3,7 @@ from enum import Enum
 import serial
 from multiprocessing import Process
 from multiprocessing import Queue
+import multiprocessing
 import queue as Queue2
 from time import sleep
 
@@ -13,16 +14,24 @@ class esmSerialPorts(Enum):
     stringInverter = 3
 class esmSerial():
     uiProc = None
-    def read(self,port):
-        return None
 
     def write(self,port,msg):
+        try:
+            if port.port != None:
+                port.write(msg)
+        except AttributeError:
+            pass
         return None
 
     def rxHandler(self,port,callback,queue):
         while True:
-            if self.read(port):
-                self.dprint(ps.serial,'Value Received')
+            if port.isOpen():
+                while port.in_waiting > 0:
+                    #self.dprint(ps.serial,'Value Received')
+                    if type(callback) is multiprocessing.queues.Queue:
+                        callback.put((port.read(1)))
+                    else:
+                        print(type(callback))
             try:
                 item = queue.get_nowait()
                 if item == 'q':
@@ -30,7 +39,7 @@ class esmSerial():
             except Queue2.Empty:
                 pass
 
-            sleep(.1)
+            sleep(.001)
 
     def serialTasksClose(self):
         # TODO Should switch to message queue for termination
@@ -40,7 +49,7 @@ class esmSerial():
             self.ports[port][1].join()
 
 
-    def init(self,Dprint,serPorts):
+    def __init__(self,Dprint,serPorts):
         self.dprint = Dprint.dprint
         dprint = self.dprint
 
@@ -49,13 +58,17 @@ class esmSerial():
             # Create the port from the tuple provided
             # 0 - port enum name
             # 1 - port location
-            # 2 - port callback
-            ser = serial.Serial()
+            # 2 - port callback queue
+            if port[1] != None and port[1] != 'test':
+                ser = serial.Serial(port[1])
+            else:
+                ser = serial.Serial()
+            if len(port) > 3:
+                ser.baudrate = port[3]
             queue = Queue()
             p = Process(target=self.rxHandler,args=(ser,port[2],queue))
             p.start()
             self.ports[port[0]] = (ser,p,queue)
-        return False
 
     def close(self):
         self.serialTasksClose()
@@ -65,9 +78,11 @@ class esmSerial():
             if not port in self.ports:
                 print("Port not defined")
                 return True
-            self.write(self.ports[port],msg)
+            serPort = self.ports[port][0]
+            self.write(serPort,msg)
             return len(msg)
         except AttributeError:
+            raise
             return True
 
 

@@ -40,18 +40,14 @@ class TestDCLoadMethods(unittest.TestCase):
         self.assertEqual(pp.all(),[[0,1,2],[0,1,2],[0,1,4]])
 
     def test_trackMPPT(self):
-        self.assertTrue(esmDCLoad.trackMPPT(None,None)[0])
-        self.assertTrue(esmDCLoad.trackMPPT(None,esmPrint.esmPrint())[0])
-        self.assertTrue(esmDCLoad.trackMPPT(esmSerial.esmSerial(),esmPrint.esmPrint())[0])
-        self.s = esmSerial.esmSerial()
-        p = esmPrint.esmPrint()
-        p.init()
-        serPorts = [(esmSerial.esmSerialPorts.uiMicro,"/dev/ptyp1", serCallback),
-                    (esmSerial.esmSerialPorts.panelMicro,"/dev/ptyp2", serCallback),
-                    (esmSerial.esmSerialPorts.electronicLoad,"/dev/ptyp3", serCallback),
-                    (esmSerial.esmSerialPorts.stringInverter,"/dev/ptyp4", serCallback)]
-        self.assertFalse(self.s.init(p,serPorts))
-        self.assertFalse(esmDCLoad.trackMPPT(self.s,p)[0])
+        dc = esmDCLoad.esmDCLoad()
+        p = esmPrint.esmPrint(False)
+        serPorts = [(esmSerial.esmSerialPorts.electronicLoad,"test", dc.getCallback(),38400)]
+        self.s = esmSerial.esmSerial(p,serPorts)
+
+        self.assertTrue(dc.trackMPPT(None,None,500)[0])
+        self.assertTrue(dc.trackMPPT(None,p,500)[0])
+        self.assertFalse(dc.trackMPPT(self.s,p,500)[0])
     def tearDown(self):
         if self.s is not None:
             self.s.close()

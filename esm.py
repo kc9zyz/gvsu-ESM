@@ -1,21 +1,13 @@
-import esmPrint as esmPrint
-from esmPrint import esmPrintSource as ps
 import esmSerial
 import esmDCLoad
+import esmPrint
 
-def main():
-    dprint = esmPrint.esmPrint()
+def serCallback(byte):
+    print(str(byte,'ascii'), end="")
+dc = esmDCLoad.esmDCLoad()
+serPorts = [(esmSerial.esmSerialPorts.electronicLoad,"/dev/tty.usbserial",dc.getCallback(),38400)]
+p = esmPrint.esmPrint()
+s = esmSerial.esmSerial(p,serPorts)
+dc.trackMPPT(s,p,8000)
+s.close()
 
-    serial = esmSerial.esmSerial()
-    dprint = esmPrint.esmPrint()
-    dprint.init()
-    serPorts = #[(esmSerial.esmSerialPorts.uiMicro,"/dev/ptyp1", serCallback)]
-#            (esmSerial.esmSerialPorts.panelMicro,"/dev/ptyp2", serCallback),
-[            (esmSerial.esmSerialPorts.electronicLoad,"/dev/ptyp3", esmDCLoad.callback)]
-#            (esmSerial.esmSerialPorts.stringInverter,"/dev/ptyp4", serCallback)]
-    serial.init(dprint,serPorts))
-    esmDCLoad.trackMPPT(serial,dprint)
-
-
-if __name__ == "__main__":
-    main()
