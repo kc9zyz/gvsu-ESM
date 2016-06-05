@@ -4,6 +4,7 @@ import time
 from multiprocessing import Queue
 import queue
 import csv
+import numpy as np
 
 
 class powerPointTrack:
@@ -108,9 +109,9 @@ class esmDCLoad:
         voltage = 0
         power = 0
         currents = [0]
-        currents2 = [0]
         voltages = [0]
         powers = [0]
+
 
         #Verify that print is setup
         if Dprint == None:
@@ -126,28 +127,55 @@ class esmDCLoad:
         #
         # Set the current to 0
         current = 0
-        while current <= maxCurrent :
-            if self.setCurrent(serial,current):
-                return (True,0)
-            time.sleep(.2)
-            try:
-                voltages.append(self.getVoltage(serial))
-                currents.append(self.getCurrent(serial))
-                currents2.append(current)
-                powers.append(self.getPower(serial))
-            except queue.Empty:
-                print('No Response from DC Load')
-                break
+        currentStepLevel = 100
+        for i in range(0,4):
+            currentsSession = [0]
+            voltagesSession = [0]
+            powersSession = [0]
 
-            current += 500
+            while current <= maxCurrent :
+                print(current)
+                if self.setCurrent(serial,current):
+                    return (True,0)
+                time.sleep(.4)
+                try:
+                    voltages.append(self.getVoltage(serial))
+                    voltagesSession.append(voltages[len(voltages)-1])
+
+                    currents.append(self.getCurrent(serial))
+                    currentsSession.append(currents[len(currents)-1])
+
+                    powers.append(self.getPower(serial))
+                    powersSession.append(powers[len(powers)-1])
+                except queue.Empty:
+                    print('No Response from DC Load')
+                    return (False,0)
+
+                current += currentStepLevel
+
+            # Find the index of the max power value
+            x = np.array(powersSession)
+            maxIdx = np.argmax(x)
+            maxCurr = int(currentsSession[maxIdx] *1000)
+            print('Max: ',maxCurr, ' MaxP: ',powersSession[maxIdx])
+
+            current = maxCurr - currentStepLevel
+            maxCurrent = maxCurr + currentStepLevel
+            currentStepLevel /=8
+
+            self.deactivateDevice(serial)
+            time.sleep(3)
+            self.prepareDevice(serial)
+
+
 
         self.deactivateDevice(serial)
         f = open('out.csv','wt')
         try:
             writer = csv.writer(f)
-            writer.writerow(('Voltage','Current', 'Current2','Power'))
+            writer.writerow(('Voltage','Current', 'Power'))
             for i in range(0,len(voltages)):
-                writer.writerow((voltages[i],currents[i], currents2[i],powers[i]))
+                writer.writerow((voltages[i],currents[i],powers[i]))
         finally:
             f.close()
 
