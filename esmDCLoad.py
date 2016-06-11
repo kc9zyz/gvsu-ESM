@@ -7,17 +7,30 @@ import csv
 import numpy as np
 
 
+# Defines a power tracking point
 class powerPointTrack:
-    voltage = [0]
-    current = [0]
-    power   = [0]
+    def __init__(self):
+        self.voltage = [0]
+        self.current = [0]
+        self.power   = [0]
 
     def all(self):
-        return [self.voltage,self.current,self.power]
+        return (self.voltage,self.current,self.power)
+    def add(self,pp):
+        for i in pp.voltage:
+            print(i)
+            self.voltage.append(i)
+        for i in pp.current:
+            self.current.append(i)
+        for i in pp.power:
+            self.power.append(i)
+    def last(self):
+        return (self.voltage[-1],self.current[-1],self.current[-1])
+
+
 class esmDCLoad:
 
     def __init__(self):
-
         self.respQ = Queue()
 
     def getCallback(self):
@@ -104,15 +117,6 @@ class esmDCLoad:
 
     def trackMPPT(self,serial, Dprint, maxCurrent):
 
-        # Set the parameters to 0 
-        current = 0
-        voltage = 0
-        power = 0
-        currents = [0]
-        voltages = [0]
-        powers = [0]
-
-
         #Verify that print is setup
         if Dprint == None:
             print('ERR: DPrint not given, falling back')
@@ -127,44 +131,46 @@ class esmDCLoad:
         #
         # Set the current to 0
         current = 0
-        currentStepLevel = 100
+        currentStepLevel = 500
+        powerPoint = powerPointTrack()
         for i in range(0,4):
-            currentsSession = [0]
-            voltagesSession = [0]
-            powersSession = [0]
+            sessionPoint = powerPointTrack()
 
             while current <= maxCurrent :
-                print(current)
                 if self.setCurrent(serial,current):
                     return (True,0)
-                time.sleep(.4)
+                time.sleep(1)
                 try:
-                    voltages.append(self.getVoltage(serial))
-                    voltagesSession.append(voltages[len(voltages)-1])
+                    # Get the operating voltage
+                    sessionPoint.voltage.append(self.getVoltage(serial))
 
-                    currents.append(self.getCurrent(serial))
-                    currentsSession.append(currents[len(currents)-1])
+                    # Get the operating current
+                    sessionPoint.current.append(self.getCurrent(serial))
 
-                    powers.append(self.getPower(serial))
-                    powersSession.append(powers[len(powers)-1])
+                    # Get the operating power
+                    sessionPoint.power.append(self.getPower(serial))
+                    print(sessionPoint.last())
                 except queue.Empty:
                     print('No Response from DC Load')
                     return (False,0)
 
                 current += currentStepLevel
+            powerPoint.add(sessionPoint)
 
             # Find the index of the max power value
-            x = np.array(powersSession)
+            x = np.array(powerPoint.power)
             maxIdx = np.argmax(x)
-            maxCurr = int(currentsSession[maxIdx] *1000)
-            print('Max: ',maxCurr, ' MaxP: ',powersSession[maxIdx])
+            maxCurr = int(powerPoint.current[maxIdx] *1000)
+            print('Max: ',maxCurr, ' MaxP: ',powerPoint.power[maxIdx])
 
             current = maxCurr - currentStepLevel
+            if current < 0:
+                current = 0
             maxCurrent = maxCurr + currentStepLevel
             currentStepLevel /=8
 
             self.deactivateDevice(serial)
-            time.sleep(3)
+            time.sleep(1)
             self.prepareDevice(serial)
 
 
