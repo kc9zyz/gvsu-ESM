@@ -4,3 +4,4 @@ myenv
 .coverage
 .noseids
 *.csv
+private_key.pem
