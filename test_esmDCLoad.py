@@ -30,14 +30,21 @@ class TestDCLoadMethods(unittest.TestCase):
         self.assertEqual(pp.power,[0,1])
 
         # Test all
-        self.assertEqual(pp.all(),[[0,1],[0,1],[0,1]])
+        self.assertEqual(pp.all(),([0,1],[0,1],[0,1]))
 
         pp.voltage.append(2)
         pp.current.append(2)
         pp.power.append(4)
 
         # Test all
-        self.assertEqual(pp.all(),[[0,1,2],[0,1,2],[0,1,4]])
+        self.assertEqual(pp.all(),([0,1,2],[0,1,2],[0,1,4]))
+
+
+        pp2 = esmDCLoad.powerPointTrack()
+        #print(pp2.all())
+        pp2.add(pp)
+        self.assertEqual(pp2.all(),([0,0,1,2],[0,0,1,2],[0,0,1,4]))
+
 
     def test_trackMPPT(self):
         dc = esmDCLoad.esmDCLoad()

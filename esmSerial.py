@@ -13,7 +13,6 @@ class esmSerialPorts(Enum):
     electronicLoad = 2
     stringInverter = 3
 class esmSerial():
-    uiProc = None
 
     def write(self,port,msg):
         try:
@@ -50,6 +49,7 @@ class esmSerial():
 
 
     def __init__(self,Dprint,serPorts):
+        self.uiProc = None
         self.dprint = Dprint.dprint
         dprint = self.dprint
 
