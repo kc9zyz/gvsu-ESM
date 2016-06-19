@@ -29,8 +29,6 @@ class esmSerial():
                     #self.dprint(ps.serial,'Value Received')
                     if type(callback) is multiprocessing.queues.Queue:
                         callback.put((port.read(1)))
-                    else:
-                        print(type(callback))
             try:
                 item = queue.get_nowait()
                 if item == 'q':
@@ -46,6 +44,7 @@ class esmSerial():
         for port in self.ports:
             self.ports[port][2].put('q')
             self.ports[port][1].join()
+            self.ports[port][0].close()
 
 
     def __init__(self,Dprint,serPorts):

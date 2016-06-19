@@ -1,5 +1,17 @@
 cov-core==1.15.0
 coverage==4.1
+cycler==0.10.0
+dummyserial==1.0.0
+Naked==0.1.31
 nose==1.3.7
 nose-cov==1.6
+numpy==1.11.0
+pyasn1==0.1.9
+pyparsing==2.1.4
 pyserial==3.0.1
+python-dateutil==2.5.3
+pytz==2016.4
+PyYAML==3.11
+requests==2.10.0
+shellescape==3.4.1
+six==1.10.0
