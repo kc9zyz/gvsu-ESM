@@ -60,7 +60,10 @@ class esmSerial():
             # 1 - port location
             # 2 - port callback queue
             if port[1] != None and port[1] != 'test':
-                ser = serial.Serial(port[1])
+                try:
+                    ser = serial.Serial(port[1])
+                except serial.SerialException:
+                    ser = serial.Serial()
             else:
                 ser = serial.Serial()
             if len(port) > 3:

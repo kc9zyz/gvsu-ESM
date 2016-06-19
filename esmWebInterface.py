@@ -32,7 +32,7 @@ class esmWebInterface:
         payload = {'json': dataBytes, 'hash': m.hexdigest()}
         # Sen the post request
         r = requests.post(self.url + '?asset=current-data',data = payload)
-        Print the result
+        #Print the result
         print(r.status_code)
         print(r.text)
 

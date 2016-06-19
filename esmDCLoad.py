@@ -18,7 +18,6 @@ class powerPointTrack:
         return (self.voltage,self.current,self.power)
     def add(self,pp):
         for i in pp.voltage:
-            print(i)
             self.voltage.append(i)
         for i in pp.current:
             self.current.append(i)
@@ -132,8 +131,9 @@ class esmDCLoad:
         # Set the current to 0
         current = 0
         currentStepLevel = 500
+        maxP = 0
         powerPoint = powerPointTrack()
-        for i in range(0,4):
+        for i in range(0,2):
             sessionPoint = powerPointTrack()
 
             while current <= maxCurrent :
@@ -162,6 +162,7 @@ class esmDCLoad:
             maxIdx = np.argmax(x)
             maxCurr = int(powerPoint.current[maxIdx] *1000)
             print('Max: ',maxCurr, ' MaxP: ',powerPoint.power[maxIdx])
+            maxP = powerPoint.power[maxIdx]
 
             current = maxCurr - currentStepLevel
             if current < 0:
@@ -176,17 +177,17 @@ class esmDCLoad:
 
 
         self.deactivateDevice(serial)
-        f = open('out.csv','wt')
-        try:
-            writer = csv.writer(f)
-            writer.writerow(('Voltage','Current', 'Power'))
-            for i in range(0,len(voltages)):
-                writer.writerow((voltages[i],currents[i],powers[i]))
-        finally:
-            f.close()
+        #f = open('out.csv','wt')
+#        try:
+#            writer = csv.writer(f)
+#            writer.writerow(('Voltage','Current', 'Power'))
+#            for i in range(0,len()):
+#                writer.writerow((voltages[i],currents[i],powers[i]))
+#        finally:
+#            f.close()
 
         # Increase the current until the computed power begins to decrease
 
         # Perturb and observe to get MPP
-        return (False,0)
+        return (False,maxP)
 
