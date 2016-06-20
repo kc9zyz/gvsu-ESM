@@ -43,7 +43,6 @@ class esmDCLoad:
             try:
                 byte = self.respQ.get(True,1)
                 message += byte
-                # print(str(byte,'ascii'))
             except queue.Empty:
                 print('Nothing in the queue')
                 raise
