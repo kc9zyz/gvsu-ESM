@@ -4,7 +4,6 @@ import time
 from multiprocessing import Queue
 import queue
 import csv
-import numpy as np
 
 
 # Defines a power tracking point
@@ -157,8 +156,7 @@ class esmDCLoad:
             powerPoint.add(sessionPoint)
 
             # Find the index of the max power value
-            x = np.array(powerPoint.power)
-            maxIdx = np.argmax(x)
+            maxIdx = max(x)
             maxCurr = int(powerPoint.current[maxIdx] *1000)
             print('Max: ',maxCurr, ' MaxP: ',powerPoint.power[maxIdx])
             maxP = powerPoint.power[maxIdx]
