@@ -44,6 +44,7 @@ class TestDCLoadMethods(unittest.TestCase):
         #print(pp2.all())
         pp2.add(pp)
         self.assertEqual(pp2.all(),([0,0,1,2],[0,0,1,2],[0,0,1,4]))
+        self.assertEqual(pp2.last(),(2,2,4))
 
 
     def test_trackMPPT(self):

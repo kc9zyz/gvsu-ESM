@@ -2,12 +2,8 @@
 try:
     import RPi.GPIO as gpio
 except ImportError:
-    try:
-        # Fallback to the mocked module for testing
-        import esmGPIOMock as gpio
-    except ImportError:
-        print('RPi.GPIO Library not installed, Mock library not found either.')
-        raise
+    # Fallback to the mocked module for testing
+    import esmGPIOMock as gpio
 from enum import Enum
 
 class gpioPins(Enum):

@@ -23,7 +23,7 @@ class powerPointTrack:
         for i in pp.power:
             self.power.append(i)
     def last(self):
-        return (self.voltage[-1],self.current[-1],self.current[-1])
+        return (self.voltage[-1],self.current[-1],self.power[-1])
 
 
 class esmDCLoad:
@@ -150,6 +150,7 @@ class esmDCLoad:
                     print(sessionPoint.last())
                 except queue.Empty:
                     print('No Response from DC Load')
+                    self.deactivateDevice(serial)
                     return (False,0)
 
                 current += currentStepLevel

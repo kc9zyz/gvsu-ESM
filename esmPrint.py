@@ -13,16 +13,12 @@ class esmPrintSource(Enum):
 class esmPrint():
     moduleInit = None
     def dprint(self,source, text):
-        if self.moduleInit == None:
-            print('Need to init');
-            return True
+        if self.toFile == True:
+            #write to file
+            pass
         else:
-            if self.toFile == True:
-                #write to file
-                pass
-            else:
-                print('\n'+source.value[1]+text)
-            return False
+            print('\n'+source.value[1]+text)
+        return False
 
     def __init__(self, toFile):
         if toFile == True:
