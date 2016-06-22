@@ -24,24 +24,33 @@ class esmADC:
     def __init__(self):
         self.bus = smbus.SMBus(1)
         self.address = ADDRESS
-        # Send auto scan mode
-        self.bus.write_byte_data(self.address,MODECNTRL,active)
-        self.bus.write_byte_data(self.address,MODECNTRL,auto_scan)
+        for i in range (0,5):
+            try:
+                # Send auto scan mode
+                self.bus.write_byte_data(self.address,MODECNTRL,active)
+                self.bus.write_byte_data(self.address,MODECNTRL,auto_scan)
+                return
+            except:
+                pass
 
     def read(self):
-        time.sleep(0.01)
-        self.bus.write_byte_data(self.address,MODECNTRL,idle)
-        chan0 = self.bus.read_byte_data(self.address,DATA0_U) << 4
-        chan0 = chan0 + (self.bus.read_byte_data(self.address,DATA0_L) >> 4)
-        chan0 = chan0 * (5/4096)
-
-        chan1 = self.bus.read_byte_data(self.address,DATA1_U) << 4
-        chan1 = chan1 + (self.bus.read_byte_data(self.address,DATA1_L) >> 4)
-        chan1 = chan1 * (5/4096)
-
-        chan2 = self.bus.read_byte_data(self.address,DATA2_U) << 4
-        chan2 = chan2 + (self.bus.read_byte_data(self.address,DATA2_L) >> 4)
-        chan2 = chan2 * (5/4096)
-
-        self.bus.write_byte_data(self.address,MODECNTRL,auto_scan)
-        return (chan0,chan1,chan2)
+        for i in range (0,5):
+            try:
+                time.sleep(0.01)
+                self.bus.write_byte_data(self.address,MODECNTRL,idle)
+                chan0 = self.bus.read_byte_data(self.address,DATA0_U) << 4
+                chan0 = chan0 + (self.bus.read_byte_data(self.address,DATA0_L) >> 4)
+                chan0 = chan0 * (5/4096)
+        
+                chan1 = self.bus.read_byte_data(self.address,DATA1_U) << 4
+                chan1 = chan1 + (self.bus.read_byte_data(self.address,DATA1_L) >> 4)
+                chan1 = chan1 * (5/4096)
+        
+                chan2 = self.bus.read_byte_data(self.address,DATA2_U) << 4
+                chan2 = chan2 + (self.bus.read_byte_data(self.address,DATA2_L) >> 4)
+                chan2 = chan2 * (5/4096)
+        
+                self.bus.write_byte_data(self.address,MODECNTRL,auto_scan)
+                return (chan0,chan1,chan2)
+            except:
+                pass
