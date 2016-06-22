@@ -1,4 +1,5 @@
 BOARD = 0
+BCM = 0
 OUT = 0
 LOW = 0
 HIGH = 0
