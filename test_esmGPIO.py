@@ -5,9 +5,9 @@ import esmGPIO
 class TestPrint(unittest.TestCase):
     def test_init(self):
         g = esmGPIO.esmGPIO()
-        g.output(esmGPIO.gpioPins.retractRelay,True)
-        g.output(esmGPIO.gpioPins.retractRelay,False)
-        g.input(esmGPIO.gpioPins.retractRelay)
+        g.output(esmGPIO.retractRelay,True)
+        g.output(esmGPIO.retractRelay,False)
+        g.input(esmGPIO.retractRelay)
 
 
     def tearDown(self):

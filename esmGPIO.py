@@ -6,20 +6,19 @@ except ImportError:
     import esmGPIOMock as gpio
 from enum import Enum
 
-class gpioPins(Enum):
-    retractRelay = 0
-    buzzerRelay = 1
+retractRelay = 17
+buzzerRelay = 18
 
 
 
 class esmGPIO:
     def __init__(self):
         # Set board mode to BOARD (raspberry pi header numbering)
-        gpio.setmode(gpio.BOARD)
+        gpio.setmode(gpio.BCM)
 
         # Setup relay outputs
-        gpio.setup(gpioPins.retractRelay,gpio.OUT, initial=gpio.LOW)
-        gpio.setup(gpioPins.buzzerRelay,gpio.OUT, initial=gpio.LOW)
+        gpio.setup(retractRelay,gpio.OUT, initial=gpio.LOW)
+        gpio.setup(buzzerRelay,gpio.OUT, initial=gpio.LOW)
     def output(self, pin, level):
         if level:
             gpio.output(pin,gpio.HIGH)
