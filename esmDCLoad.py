@@ -43,7 +43,7 @@ class esmDCLoad:
                 byte = self.respQ.get(True,1)
                 message += byte
             except queue.Empty:
-                print('Nothing in the queue')
+                dprint(ps.mppt,'Nothing in the queue')
                 raise
         return message
 
@@ -147,9 +147,9 @@ class esmDCLoad:
 
                     # Get the operating power
                     sessionPoint.power.append(self.getPower(serial))
-                    print(sessionPoint.last())
+                    dprint(ps.mppt,sessionPoint.last())
                 except queue.Empty:
-                    print('No Response from DC Load')
+                    dprint(ps.mppt,'No Response from DC Load')
                     self.deactivateDevice(serial)
                     return (False,0)
 
@@ -159,7 +159,7 @@ class esmDCLoad:
             # Find the index of the max power value
             maxIdx = max(x)
             maxCurr = int(powerPoint.current[maxIdx] *1000)
-            print('Max: ',maxCurr, ' MaxP: ',powerPoint.power[maxIdx])
+            dprint(ps.mppt, 'Max: '+maxCurr+ ' MaxP: '+powerPoint.power[maxIdx])
             maxP = powerPoint.power[maxIdx]
 
             current = maxCurr - currentStepLevel
@@ -175,7 +175,7 @@ class esmDCLoad:
 
 
         self.deactivateDevice(serial)
-        #f = open('out.csv','wt')
+#        f = open('out.csv','wt')
 #        try:
 #            writer = csv.writer(f)
 #            writer.writerow(('Voltage','Current', 'Power'))
@@ -184,8 +184,6 @@ class esmDCLoad:
 #        finally:
 #            f.close()
 
-        # Increase the current until the computed power begins to decrease
-
-        # Perturb and observe to get MPP
+        # Return the computer maximum power point
         return (False,maxP)
 
