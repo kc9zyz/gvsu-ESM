@@ -30,85 +30,124 @@ LSM9DS1 imu;
 // Teensy has an extra hardware UART, we are using UART2
 #define Uart Serial2
 
+// Function prototypes
 void gpsdump(TinyGPS &gps);
 void printFloat(double f, int digits = 2);
 void(* resetFunc) (void) = 0; //declare reset function @ address 0
 void getIMU();
 void getTemp();
-void printErorr();
+void printError();
+
+
+
+// Arduino setup function
 void setup()
 {
+  // Start the serial connection between the micro and the Raspberry Pi
   Serial.begin(115200);
+
+  // Start the serial communication to the GPS module
   Uart.begin(9600);
+
+  // Setup the I2C connection the IMU
   imu.settings.device.commInterface = IMU_MODE_I2C;
   imu.settings.device.mAddress = LSM9DS1_M;
   imu.settings.device.agAddress = LSM9DS1_AG;
 
+  // If the IMU is unable to start, print an error and call a SW reset
   if (!imu.begin())
   {
-    printErorr();
+    printError();
     resetFunc();  //call reset
   }
 }
 
+// Arduino loop code
 void loop()
 {
+  // Variable to hold whether or not there is new data from the GPS
   bool newdata = false;
+
+  // Track the start of the wait cycle
   unsigned long start = millis();
-  unsigned long fix_age, time, date;
 
   // Every 5 seconds we print an update
   while (millis() - start < 5000) {
+    // If there is serial data available, read it and send it to the gps library
     if (Uart.available()) {
       char c = Uart.read();
-      //Serial.print(c);  // uncomment to see raw GPS data
+      // If the encode process returned that there is new data, let the rest of
+      // the function know
       if (gps.encode(c)) {
         newdata = true;
-        // break;  // uncomment to print new data immediately!
       }
     }
   }
-  
+
+  // If there is new data from the library, print it out
   if (newdata) {
+    // Dump the GPS data
     gpsdump(gps);
+
+    // Dump the IMU data
     getIMU();
+
+    // Dump the temperature sensor
     getTemp();
   }
   else{
+    // Dump the IMU data
     getIMU();
+
+    // Dump the temperature data
     getTemp();
   }
 }
-void printErorr()
+
+// Print an error if there is something wrong with initialization
+void printError()
 {
   Serial.println("{\"error: 1}");
 }
+
+
+// Get the data from the IMU
 void getIMU()
 {
+  // Read the Gyrometer
   imu.readGyro();
+
+  // Read the Accelerometer
   imu.readAccel();
+
+  // Read the Magnetometer
   imu.readMag();
-  
+
+  // Compute the roll and pitch from the imu data
   float roll = atan2(imu.ay, imu.az);
   float pitch = atan2(-imu.ax, sqrt(imu.ay * imu.ay + imu.az * imu.az));
-  
+
+  // Compute the heading from IMU data
   float heading;
   if (imu.my == 0)
     heading = (imu.mx < 0) ? 180.0 : 0;
   else
     heading = atan2(imu.mx, imu.my);
-    
+
+  // Offset heading by the declination
   heading -= DECLINATION * PI / 180;
-  
+
+  // Format the heading based on a 0-360 degree representation of the compass
   if (heading > PI) heading -= (2 * PI);
   else if (heading < -PI) heading += (2 * PI);
   else if (heading < 0) heading += 2 * PI;
-  
+
   // Convert everything from radians to degrees:
   heading *= 180.0 / PI;
   pitch *= 180.0 / PI;
   roll  *= 180.0 / PI;
-  
+
+  // Print out the IMU data to
   Serial.print("{\"pitch\":");
   Serial.print(pitch, 2);
   Serial.print(", ");
@@ -120,6 +159,8 @@ void getIMU()
   Serial.print("}\n");
 
 }
+
+// Process the temperature sensor data
 void getTemp()
 {
   byte i;
@@ -129,27 +170,34 @@ void getTemp()
   byte addr[8];
   float celsius, fahrenheit;
   static int retries = 0;
-  
+
+  // If a Temp sensor can't be found, call this function recursively.
+  // A counter variable makes sure that the function doesn't get stuck in a loop
   if ( !ds.search(addr)) {
+    // Restart the search for a DS temp sensor
     ds.reset_search();
     delay(250);
     retries++;
     if(retries > 5)
     {
+      // If the retries are exhausted, return from the function
       return;
     }
     else
     {
+      // If there are more tries left, run the function recursively
       return getTemp();
     }
   }
+  // Reset the amount of retries available once a device is found
   retries = 0;
-  
+
+  // Verify that the address CRC matches the computed CRC
   if (OneWire::crc8(addr, 7) != addr[7]) {
       Serial.println("{\"temp: -1}");
       return;
   }
- 
+
   // the first ROM byte indicates which chip
   switch (addr[0]) {
     case 0x10:
@@ -164,17 +212,21 @@ void getTemp()
     default:
       Serial.println("{\"temp: -1}");
       return;
-  } 
+  }
 
+  // Reset the onewire library
   ds.reset();
+
+  // Instruct the library to select the found device
   ds.select(addr);
   ds.write(0x44, 1);        // start conversion, with parasite power on at the end
-  
-  delay(1000);     // maybe 750ms is enough, maybe not
-  // we might do a ds.depower() here, but the reset will take care of it.
-  
+
+  // wait for the conversion to finish
+  delay(1000);
+
+  // Reset the library
   present = ds.reset();
-  ds.select(addr);    
+  ds.select(addr);
   ds.write(0xBE);         // Read Scratchpad
 
   for ( i = 0; i < 9; i++) {           // we need 9 bytes
@@ -186,6 +238,7 @@ void getTemp()
   // be stored to an "int16_t" type, which is always 16 bits
   // even when compiled on a 32 bit processor.
   int16_t raw = (data[1] << 8) | data[0];
+  // Handle different types of sensors
   if (type_s) {
     raw = raw << 3; // 9 bit resolution default
     if (data[7] == 0x10) {
@@ -200,14 +253,17 @@ void getTemp()
     else if (cfg == 0x40) raw = raw & ~1; // 11 bit res, 375 ms
     //// default is 12 bit resolution, 750 ms conversion time
   }
+  // Convert raw count to C and F
   celsius = (float)raw / 16.0;
   fahrenheit = celsius * 1.8 + 32.0;
 
+  // Report the results
   Serial.print("{\"temp\":");
   Serial.print(fahrenheit, 2);
   Serial.print("}\n");
-  
 }
+
+// Handle the GPS data
 void gpsdump(TinyGPS &gps)
 {
   long lat, lon;
@@ -217,8 +273,13 @@ void gpsdump(TinyGPS &gps)
   byte month, day, hour, minute, second, hundredths;
   unsigned short sentences, failed;
 
+  // Get the position from the library
   gps.get_position(&lat, &lon, &age);
+
+  // Get the date and time from the library
   gps.get_datetime(&date, &time, &age);
+
+  // Print the results of the GPS acquisition
   Serial.print("{\"lat\":");
   Serial.print(lat);
   Serial.print(", ");
@@ -231,37 +292,4 @@ void gpsdump(TinyGPS &gps)
   Serial.print("\"time\":");
   Serial.print(time);
   Serial.print("}\n");
-}
-
-void printFloat(double number, int digits)
-{
-  // Handle negative numbers
-  if (number < 0.0) {
-     Serial.print('-');
-     number = -number;
-  }
-
-  // Round correctly so that print(1.999, 2) prints as "2.00"
-  double rounding = 0.5;
-  for (uint8_t i=0; i<digits; ++i)
-    rounding /= 10.0;
-  
-  number += rounding;
-
-  // Extract the integer part of the number and print it
-  unsigned long int_part = (unsigned long)number;
-  double remainder = number - (double)int_part;
-  Serial.print(int_part);
-
-  // Print the decimal point, but only if there are digits beyond
-  if (digits > 0)
-    Serial.print("."); 
-
-  // Extract digits from the remainder one at a time
-  while (digits-- > 0) {
-    remainder *= 10.0;
-    int toPrint = int(remainder);
-    Serial.print(toPrint);
-    remainder -= toPrint;
-  }
 }
