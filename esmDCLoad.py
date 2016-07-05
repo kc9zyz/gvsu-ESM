@@ -28,8 +28,12 @@ class powerPointTrack:
 
 class esmDCLoad:
 
-    def __init__(self):
+    def __init__(self, Dprint):
         self.respQ = Queue()
+        #Verify that print is setup
+        if Dprint == None:
+            raise AttributeError('Dprint not specified.')
+        self.dprint = Dprint.dprint
 
     def getCallback(self):
         return self.respQ
@@ -43,7 +47,7 @@ class esmDCLoad:
                 byte = self.respQ.get(True,1)
                 message += byte
             except queue.Empty:
-                dprint(ps.mppt,'Nothing in the queue')
+                self.dprint(ps.mppt,'Nothing in the queue')
                 raise
         return message
 
@@ -112,13 +116,11 @@ class esmDCLoad:
         serial.sendSerial(esmSerial.esmSerialPorts.electronicLoad,msg)
 
 
-    def trackMPPT(self,serial, Dprint, maxCurrent):
+    def trackMPPT(self,serial, maxCurrent):
+        # Make it easier to reference dprint
+        dprint = self.dprint
 
-        #Verify that print is setup
-        if Dprint == None:
-            print('ERR: DPrint not given, falling back')
-            return (True,0)
-        dprint = Dprint.dprint
+
         if serial == None:
             dprint(ps.mppt,'Serial port not specified.')
             return (True,0)

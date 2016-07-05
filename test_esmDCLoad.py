@@ -48,14 +48,16 @@ class TestDCLoadMethods(unittest.TestCase):
 
 
     def test_trackMPPT(self):
-        dc = esmDCLoad.esmDCLoad()
+        with self.assertRaises(AttributeError):
+            dc = esmDCLoad.esmDCLoad(None)
+
         p = esmPrint.esmPrint(False)
+        dc = esmDCLoad.esmDCLoad(p)
         serPorts = [(esmSerial.esmSerialPorts.electronicLoad,"test", dc.getCallback(),38400)]
         self.s = esmSerial.esmSerial(p,serPorts)
 
-        self.assertTrue(dc.trackMPPT(None,None,500)[0])
-        self.assertTrue(dc.trackMPPT(None,p,500)[0])
-        self.assertFalse(dc.trackMPPT(self.s,p,500)[0])
+        self.assertTrue(dc.trackMPPT(None,500)[0])
+        self.assertFalse(dc.trackMPPT(self.s,500)[0])
     def tearDown(self):
         if self.s is not None:
             self.s.close()
