@@ -10,6 +10,9 @@ class esmPrintSource(Enum):
     # MPPT
     mppt = [4,'<MPPT> ']
 
+    # Panel Micro
+    panelMicro = [5,'<Panel Micro>']
+
 class esmPrint():
     moduleInit = None
     def dprint(self,source, text):
