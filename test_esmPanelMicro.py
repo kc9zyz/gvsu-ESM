@@ -4,11 +4,13 @@ import esmPrint
 import esmSerial
 import time
 import datetime
+from multiprocessing import Queue
 
 class TestDCLoadMethods(unittest.TestCase):
     def test_gps(self):
         Dprint = esmPrint.esmPrint(False)
-        pm = esmPanelMicro.esmPanelMicro(Dprint)
+        queue = Queue()
+        pm = esmPanelMicro.esmPanelMicro(Dprint,queue)
         self.pm = pm
         for c in '{"lat" : 42.0, "long" : -85.0}\n':
             pm.respQ.put(c.encode('ascii'))

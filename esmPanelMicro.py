@@ -41,6 +41,7 @@ class panelThread(threading.Thread):
 
                 try:
                     self.panelMicro.pitch = data['pitch']
+                    print(self.panelMicro.pitch, 'Deg')
                 except KeyError:
                     pass
 
@@ -51,6 +52,7 @@ class panelThread(threading.Thread):
 
                 try:
                     self.panelMicro.temp = data['temp']
+                    print(self.panelMicro.temp,'F')
                 except KeyError:
                     pass
 
@@ -76,8 +78,8 @@ class panelThread(threading.Thread):
 
 
 class esmPanelMicro:
-    def __init__(self, Dprint):
-        self.respQ = Queue()
+    def __init__(self, Dprint, respQ):
+        self.respQ = respQ
         self.dprint = Dprint.dprint
 
         # Instantiate position variables

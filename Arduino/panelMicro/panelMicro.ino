@@ -127,6 +127,11 @@ void getIMU()
   float roll = atan2(imu.ay, imu.az);
   float pitch = atan2(-imu.ax, sqrt(imu.ay * imu.ay + imu.az * imu.az));
 
+  // Apply Magnetometer offset
+  imu.mx-=955;
+  imu.my-=1392;
+  imu.mz+=594;
+
   // Compute the heading from IMU data
   float heading;
   if (imu.my == 0)
