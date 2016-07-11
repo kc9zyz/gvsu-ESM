@@ -45,7 +45,6 @@ class esmWebInterface:
         # Return the result
         if r.status_code == 401:
             self.backlog.append(dataPoint)
-        print(r.status_code)
         return r
 
 
