@@ -27,7 +27,7 @@ class esmWebInterface:
     def sendUpdate(self, dataPoint):
         # Save the python timestamp, convert to string
         timestamp = dataPoint.timestamp
-        dataPoint.timestamp = "'"+str(dataPoint.timestamp)+"'"
+        dataPoint.timestamp = "'"+dataPoint.timestamp.strftime('%Y-%m-%d %H:%M:%S')+"'"
         # Add the random data to the data point
         dataPoint.random = base64.b64encode(os.urandom(12)).decode('ascii')
         # Create the json string
