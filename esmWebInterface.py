@@ -96,6 +96,10 @@ class esmWebInterface:
         except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
             self.backlog(dataPoint, m.hexdigest())
             return None
+        try:
+            r2 = requests.post('http://localhost/data' + '?asset=current-data',data = payload,timeout=2)
+        except:
+            pass
 
         # Return the result
         if r.status_code == 401:

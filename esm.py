@@ -6,27 +6,57 @@ import esmWebInterface
 elSer = '/dev/serial/x'
 pmSer = '/dev/serial/x'
 
+class esm:
+    def __init__(self):
+        return
 
-def serCallback(byte):
-    print(str(byte,'ascii'), end="")
-output = (False,200)
-p = esmPrint.esmPrint(False)
-dc = esmDCLoad.esmDCLoad(p)
-serPorts = [
-        (esmSerial.esmSerialPorts.electronicLoad,elSer,dc.getCallback(),38400)
-        (esmSerial.esmSerialPorts.panelMicro,pmSer,dc.getCallback(),38400)
-        ]
-s = esmSerial.esmSerial(p,serPorts)
-output = dc.trackMPPT(s,10000)
-s.close()
+    def dcLoadThread(self,queue):
+        #output = dc.trackMPPT(s,10000)
+        return
 
-print('OUTPUT '+str(int(output[1])))
-output = (False,1)
+    def setup(self):
+        with open('pass') as passFile:
+            serverPass = bytes(passFile.read(),'ascii')
+        output = (False,200)
 
-dataPoint = esmWebInterface.esmDataPoint()
-dataPoint.output = int(output[1])
+        # Setup the debug print interface
+        self.p = esmPrint.esmPrint(False)
 
-webInterface = esmWebInterface.esmWebInterface('http://cis.gvsu.edu/~neusonw/solar/data/',b'AAAAB3NzaC1yc2EAAAADAQABAAABAQD9KNADbe8h+5ZZnT/mggSUPxvkmEmlT1rWJqwK4DdIb4d19HPUKu8OIhouYz4RepmBs3G3/JXRfDKGpSeNOYlOeXhUe8MRffXfV2ZaP819gqiuFha9wsvyWXLfO9f/GNfmAuc8r4FCfP4A77l/FU9tpT+fOxeP6al08iJ5Ua1fMFGf3hhqnpixanLgyylFD+pPjX6KXqczICUDTWwGmmsgyLTyUEmmUN4sW7WZc4fNaGQSKidsDDzMLE7dFbDVY8F/to//bihpI4UmLwJYK8D/S2OcvK3skgqLDJ5K1FWhHCzNIrcp9KVxx3Na2XgrukJzhU0eHHASuPfcYElKHK/v')
+        # Setup the DC load object
+        self.dc = esmDCLoad.esmDCLoad(self.p)
+
+        # Setup the web interface
+        self.webInterface = esmWebInterface.esmWebInterface('http://cis.gvsu.edu/~neusonw/solar/data/',serverPass)
+
+        # Setup Serial Ports
+        serPorts = [
+                (esmSerial.esmSerialPorts.electronicLoad,elSer,self.dc.getCallback(),38400),
+                (esmSerial.esmSerialPorts.panelMicro,pmSer,self.dc.getCallback(),115200)
+                ]
+        self.s = esmSerial.esmSerial(self.p,serPorts)
+
+    def shutdown(self):
+        self.s.close()
+
+def main():
+    esmObj = esm()
+    esmObj.setup()
+    esmObj.shutdown()
+
+if __name__ == '__main__':
+    main()
+
+
+
+
+# Start a new thread to watch for the output of the panels and shingles
+
+#print('OUTPUT '+str(int(output[1])))
+#output = (False,1)
+#
+#dataPoint = esmWebInterface.esmDataPoint()
+#dataPoint.output = int(output[1])
+
 
 #webInterface.sendUpdate(dataPoint)
 
