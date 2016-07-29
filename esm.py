@@ -3,8 +3,8 @@ import esmDCLoad
 import esmPrint
 import esmWebInterface
 
-elSer = '/dev/serial/x'
-pmSer = '/dev/serial/x'
+elSer = '/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_D-if00-port0'
+pmSer = '/dev/serial/by-id/usb-Teensyduino_USB_Serial_1697620-if00'
 
 class esm:
     def __init__(self):
