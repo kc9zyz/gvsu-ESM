@@ -8,10 +8,8 @@ import queue as Queue2
 from time import sleep
 
 class esmSerialPorts(Enum):
-    uiMicro = 0
-    panelMicro = 1
-    electronicLoad = 2
-    stringInverter = 3
+    panelMicro = 0
+    electronicLoad = 1
 class esmSerial():
 
     def write(self,port,msg):

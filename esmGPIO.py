@@ -7,7 +7,10 @@ except ImportError:
 from enum import Enum
 
 retractRelay = 17
-buzzerRelay = 18
+buzzerRelay = 19
+dcLoadRelay = 20
+fanRelay = 21
+ssr = 22
 
 
 

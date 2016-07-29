@@ -1,6 +1,7 @@
 import unittest
 import esmWebInterface as wi
-
+import glob
+import os
 class testWeb(unittest.TestCase):
     def test_init(self):
         d = wi.esmDataPoint()
@@ -10,13 +11,18 @@ class testWeb(unittest.TestCase):
         w = wi.esmWebInterface('http://cis.gvsu.edu/~neusonw/solar/data/',b'TEST')
         d = wi.esmDataPoint()
         d.output = 100
-        self.assertEqual(w.flushBacklog(),0)
+
+        files = glob.glob('backlog/*')
+        for filename in files:
+            os.remove(filename)
+
+        self.assertEqual(w.flushBacklog()[0],0)
         # Send an update
         r = w.sendUpdate(d)
 
         # Ensure that the operation is unauthorized, but not malformed
         self.assertEqual(r.status_code, 401)
-        self.assertEqual(w.flushBacklog(),1)
+        self.assertEqual(w.flushBacklog()[0],1)
 
 
 

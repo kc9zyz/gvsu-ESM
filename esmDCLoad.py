@@ -139,7 +139,7 @@ class esmDCLoad:
             while current <= maxCurrent :
                 if self.setCurrent(serial,current):
                     return (True,0)
-                time.sleep(1)
+                time.sleep(.5)
                 try:
                     # Get the operating voltage
                     sessionPoint.voltage.append(self.getVoltage(serial))
@@ -149,7 +149,7 @@ class esmDCLoad:
 
                     # Get the operating power
                     sessionPoint.power.append(self.getPower(serial))
-                    dprint(ps.mppt,sessionPoint.last())
+                    dprint(ps.mppt,str(sessionPoint.last()))
                 except queue.Empty:
                     dprint(ps.mppt,'No Response from DC Load')
                     self.deactivateDevice(serial)
@@ -159,10 +159,10 @@ class esmDCLoad:
             powerPoint.add(sessionPoint)
 
             # Find the index of the max power value
-            maxIdx = max(x)
-            maxCurr = int(powerPoint.current[maxIdx] *1000)
-            dprint(ps.mppt, 'Max: '+maxCurr+ ' MaxP: '+powerPoint.power[maxIdx])
-            maxP = powerPoint.power[maxIdx]
+            maxIdx = sessionPoint.power.index(max(sessionPoint.power))
+            maxCurr = int(sessionPoint.current[maxIdx] *1000)
+            dprint(ps.mppt, 'Max: '+str(maxCurr)+ ' MaxP: '+str(sessionPoint.power[maxIdx]))
+            maxP = sessionPoint.power[maxIdx]
 
             current = maxCurr - currentStepLevel
             if current < 0:
