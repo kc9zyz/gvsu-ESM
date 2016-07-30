@@ -8,11 +8,15 @@ from flask_cors import CORS, cross_origin
 import logging
 
 
-panelTemp = 0
-boxTemp = 0
-warning = ''
-message = ''
-battery = ''
+data = {
+        'panelTemp' : 0,
+        'boxTemp' : 0,
+        'panelAngle' : 0,
+        'warning' : '',
+        'message' : '',
+        'battery' : 0,
+        'windspeed' : 0,
+        }
 app = Flask(__name__)
 CORS(app)
 
@@ -28,14 +32,7 @@ def shutdown_server():
 
 @app.route('/')
 def hello():
-    resp = {
-            'panelTemp':panelTemp,
-            'boxTemp':boxTemp,
-            'battery':battery,
-            'message':message,
-            'warning':warning,
-            }
-    return jsonify(**resp)
+    return jsonify(**data)
 
 # Handle the shutdown request
 @app.route('/shutdown', methods=['POST'])
@@ -51,5 +48,10 @@ def startThread():
     thread.start()
 def stop():
     r = requests.post('http://localhost:8000/shutdown')
+def update(**kwargs):
+    for arg in kwargs.keys():
+        data[arg] = kwargs[arg]
+
+    return
 if __name__ == '__main__':
     startThread()

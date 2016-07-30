@@ -133,7 +133,7 @@ class esmDCLoad:
         currentStepLevel = 500
         maxP = 0
         powerPoint = powerPointTrack()
-        for i in range(0,2):
+        for i in range(0,3):
             sessionPoint = powerPointTrack()
 
             while current <= maxCurrent :
@@ -149,7 +149,6 @@ class esmDCLoad:
 
                     # Get the operating power
                     sessionPoint.power.append(self.getPower(serial))
-                    dprint(ps.mppt,str(sessionPoint.last()))
                 except queue.Empty:
                     dprint(ps.mppt,'No Response from DC Load')
                     self.deactivateDevice(serial)
@@ -161,15 +160,17 @@ class esmDCLoad:
             # Find the index of the max power value
             maxIdx = sessionPoint.power.index(max(sessionPoint.power))
             maxCurr = int(sessionPoint.current[maxIdx] *1000)
-            dprint(ps.mppt, 'Max: '+str(maxCurr)+ ' MaxP: '+str(sessionPoint.power[maxIdx]))
+            dprint(ps.mppt, 'Max: '+str(maxCurr)+ 'A, MaxP: '+str(sessionPoint.power[maxIdx])+'W')
             maxP = sessionPoint.power[maxIdx]
 
+            # Set up the next sweep
             current = maxCurr - currentStepLevel
             if current < 0:
                 current = 0
             maxCurrent = maxCurr + currentStepLevel
-            currentStepLevel /=8
+            currentStepLevel /=5
 
+            # Restart process
             self.deactivateDevice(serial)
             time.sleep(1)
             self.prepareDevice(serial)
@@ -177,14 +178,6 @@ class esmDCLoad:
 
 
         self.deactivateDevice(serial)
-#        f = open('out.csv','wt')
-#        try:
-#            writer = csv.writer(f)
-#            writer.writerow(('Voltage','Current', 'Power'))
-#            for i in range(0,len()):
-#                writer.writerow((voltages[i],currents[i],powers[i]))
-#        finally:
-#            f.close()
 
         # Return the computer maximum power point
         return (False,maxP)

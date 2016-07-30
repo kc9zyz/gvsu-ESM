@@ -11,7 +11,10 @@ class esmPrintSource(Enum):
     mppt = [4,'<MPPT> ']
 
     # Panel Micro
-    panelMicro = [5,'<Panel Micro>']
+    panelMicro = [5,'<Panel Micro> ']
+
+    # Main
+    main = [6,'<Main> ']
 
 class esmPrint():
     moduleInit = None

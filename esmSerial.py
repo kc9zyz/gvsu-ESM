@@ -37,8 +37,6 @@ class esmSerial():
             sleep(.001)
 
     def serialTasksClose(self):
-        # TODO Should switch to message queue for termination
-        # self.uiProc.join()
         for port in self.ports:
             self.ports[port][2].put('q')
             self.ports[port][1].join()
@@ -60,6 +58,7 @@ class esmSerial():
                 try:
                     ser = serial.Serial(port[1])
                 except serial.SerialException:
+                    self.dprint(ps.serial,'Port '+port[1]+' unable to open')
                     ser = serial.Serial()
             else:
                 ser = serial.Serial()
