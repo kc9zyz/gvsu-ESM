@@ -34,7 +34,7 @@ class esmSerial():
             except Queue2.Empty:
                 pass
 
-            sleep(.001)
+            sleep(.1)
 
     def serialTasksClose(self):
         for port in self.ports:

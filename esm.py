@@ -10,9 +10,13 @@ from threading import Thread
 from esmMessages import esmMessage as em
 from esmPrint import esmPrintSource as ps
 import time
+import esmTemp
 
 elSer = '/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_D-if00-port0'
 pmSer = '/dev/serial/by-id/usb-Teensyduino_USB_Serial_1697620-if00'
+
+boxHighTemp = 100
+boxHighTempCancel = 95
 
 
 # Contains a list of warnings
@@ -26,6 +30,7 @@ warnings = {
 # Contains a list of messages
 messages = {
         'notDeployed' : ('System Not Deployed' , False),
+        'boxWarm' : ('Electrical box is warm' , False),
         }
 
 class updateHolder:
@@ -44,43 +49,68 @@ class updateHolder:
                 return False
         return True
 
+# Responsible for all the functions of the educational solar module
 class esm:
 
+    # Handles running the panel and shingle measurement
     def dcLoadThread(self,queue):
-        startTime = time.time()
-        # Measure the panels
-        self.esmGPIO.output(esmGPIO.dcLoadRelay,False)
-        result = self.dc.trackMPPT(self.s,10000)
-        if result[0]:
-            queue.put((em.dcLoadPanel,result[1]))
-        else:
-            queue.put((em.dcLoadError,em.dcLoadPanel))
-
-        # Measure the shingles
-        self.esmGPIO.output(esmGPIO.dcLoadRelay,True)
-        result = self.dc.trackMPPT(self.s,10000)
-        if result[0]:
-            queue.put((em.dcLoadShingle,result[1]))
-        else:
-            queue.put((em.dcLoadError,em.dcLoadShingle))
-
-        # Find the time it takes to run the algorithm
-        execTime = time.time()-startTime
-        startTime = time.time()
-
-        # Wait 5 minutes, checking for exit every 2
-        # Remove the execution time from the delay to remove drift
-        while time.time() < startTime + (300-execTime):
-            if not self.exitAllThreads:
-                time.sleep(2)
+        while not self.exitAllThreads:
+            startTime = time.time()
+            # Measure the panels
+            self.esmGPIO.output(esmGPIO.dcLoadRelay,False)
+            result = self.dc.trackMPPT(self.s,10000)
+            if result[0]:
+                queue.put((em.dcLoadPanel,result[1]))
             else:
-                self.dprint(ps.main, 'DC Load thread Exiting')
-                return
+                queue.put((em.dcLoadError,em.dcLoadPanel))
+
+            # Measure the shingles
+            self.esmGPIO.output(esmGPIO.dcLoadRelay,True)
+            result = self.dc.trackMPPT(self.s,10000)
+            if result[0]:
+                queue.put((em.dcLoadShingle,result[1]))
+            else:
+                queue.put((em.dcLoadError,em.dcLoadShingle))
+
+            # Find the time it takes to run the algorithm
+            execTime = time.time()-startTime
+            startTime = time.time()
+            endTime = startTime + (10- execTime)
+
+            # Wait 5 minutes, checking for exit every 2
+            # Remove the execution time from the delay to remove drift
+            while time.time() < endTime:
+                if not self.exitAllThreads:
+                    time.sleep(5)
+                else:
+                    self.dprint(ps.main, 'DC Load thread Exiting')
+                    return
+
+    # Handles monitoring of the panel measurement microcontroller
     def panelMicroThread(self, queue):
         return
 
+    # Handles monitoring the temperature of the electrical box
+    def tempThread(self, queue):
+        # Loop until time to exit
+        while not self.exitAllThreads:
+            temp = esmTemp.read_temp()
+            if not self.fanMode and temp > boxHighTemp:
+                self.fanMode = True
+                messages['boxWarm'] = True
+            elif self.fanMode and temp < boxHighTempCancel:
+                self.fanMode = False
+                messages['boxWarm'] = False
+            time.sleep(1)
+
+        self.dprint(ps.main, 'Temperature thread Exiting')
+
+
+    # Send an update when ready
     def sendUpdate(self):
         self.webInterface.sendUpdate(self.dp)
+        for a in update.updates:
+            update.updates[a] = False
 
 
     def mainThread(self,queue):
@@ -88,7 +118,7 @@ class esm:
         update  = updateHolder()
         while not self.exitAllThreads:
             try:
-                item = queue.get_nowait()
+                item = queue.get(True,1)
                 # Long handler if-else
                 if item[0] == em.dcLoadPanel:
                     # Update the panel data
@@ -106,17 +136,14 @@ class esm:
 
                 if update.ready():
                     # Data point is ready, send
-                    self.webInterface.sendUpdate(self.dp)
-                    for a in update.updates:
-                        update.updates[a] = False
+                    self.sendUpdate()
 
             except Queue2.Empty:
                 pass
         self.dprint(ps.main, 'Main thread Exiting')
 
 
-
-
+    # Setup the esm object
     def __init__(self):
 
         # Global exit value
@@ -152,6 +179,12 @@ class esm:
         # Create the main message Queue
         self.queue = Queue()
 
+        # Setup fan mode
+        self.fanMode = True
+
+        # Setup temperature sensor
+        esmTemp.setup()
+
         # Create threads container
         self.threads = []
 
@@ -159,6 +192,8 @@ class esm:
         self.threads.append(Thread(target=self.dcLoadThread,args=(self.queue,)))
 
         self.threads.append(Thread(target=self.mainThread,args=(self.queue,)))
+
+        self.threads.append(Thread(target=self.tempThread,args=(self.queue,)))
 
         for th in self.threads:
             th.start()
@@ -187,7 +222,8 @@ class esm:
 
 def main():
     with esm() as esmObj:
-        time.sleep(100)
+        while not esmObj.exitAllThreads:
+            time.sleep(1)
 
 if __name__ == '__main__':
     main()

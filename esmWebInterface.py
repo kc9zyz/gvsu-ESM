@@ -92,7 +92,7 @@ class esmWebInterface:
         payload = {'json': dataBytes, 'hash': m.hexdigest()}
         # Send the post request
         try:
-            r = requests.post(self.url + '?asset=current-data',data = payload,timeout=2)
+            r = requests.post(self.url + '?asset=current-data',data = payload,timeout=5)
         except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
             self.backlog(dataPoint, m.hexdigest())
             return None

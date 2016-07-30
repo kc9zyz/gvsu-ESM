@@ -16,6 +16,9 @@ class esmPrintSource(Enum):
     # Main
     main = [6,'<Main> ']
 
+    # Temperature
+    temp = [6,'<Temperature> ']
+
 class esmPrint():
     moduleInit = None
     def dprint(self,source, text):
@@ -23,7 +26,7 @@ class esmPrint():
             #write to file
             pass
         else:
-            print('\n'+source.value[1]+text)
+            print(source.value[1]+text)
         return False
 
     def __init__(self, toFile):
