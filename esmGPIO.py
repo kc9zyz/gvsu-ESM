@@ -22,6 +22,9 @@ class esmGPIO:
         # Setup relay outputs
         gpio.setup(retractRelay,gpio.OUT, initial=gpio.LOW)
         gpio.setup(buzzerRelay,gpio.OUT, initial=gpio.LOW)
+        gpio.setup(dcLoadRelay,gpio.OUT, initial=gpio.LOW)
+        gpio.setup(fanRelay,gpio.OUT, initial=gpio.LOW)
+        gpio.setup(ssr,gpio.OUT, initial=gpio.LOW)
     def output(self, pin, level):
         if level:
             gpio.output(pin,gpio.HIGH)
