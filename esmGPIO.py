@@ -11,6 +11,7 @@ buzzerRelay = 19
 dcLoadRelay = 20
 fanRelay = 21
 ssr = 22
+tempSensor = 25
 
 
 
@@ -25,6 +26,7 @@ class esmGPIO:
         gpio.setup(dcLoadRelay,gpio.OUT, initial=gpio.LOW)
         gpio.setup(fanRelay,gpio.OUT, initial=gpio.LOW)
         gpio.setup(ssr,gpio.OUT, initial=gpio.LOW)
+        gpio.setup(tempSensor,gpio.OUT, initial=gpio.HIGH)
     def output(self, pin, level):
         if level:
             gpio.output(pin,gpio.HIGH)

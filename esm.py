@@ -118,7 +118,7 @@ class esm:
     def tempThread(self, queue):
         # Loop until time to exit
         while not self.exitAllThreads:
-            temp = esmTemp.read_temp()
+            temp = esmTemp.read_temp(self.dprint,self.esmGPIO)
             queue.put((em.boxTemp,temp))
             if not self.fanMode and temp > boxHighTemp:
                 self.fanMode = True

@@ -4,6 +4,8 @@ import time
 import subprocess
 import statistics
 import decimal
+import esmGPIO
+from esmPrint import esmPrintSource as ps
 
 # Based off of https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/software
 
@@ -28,7 +30,7 @@ def read_temp_raw():
     return lines
 
 # Convert the information from raw reads to degrees f
-def read_temp():
+def read_temp(dprint, gpio):
     temp_f = []
     # Read the temperature
     lines = read_temp_raw()
@@ -36,8 +38,14 @@ def read_temp():
         return 0
     # Convert the data to temperature count
     while lines[0].strip()[-3:] != 'YES':
-        time.sleep(1)
+        self.dprint(ps.temp, 'Resetting Sensor')
+        gpio.output(esmGPIO.tempSensor,False);
+        time.sleep(2)
+        gpio.output(esmGPIO.tempSensor,True);
+        time.sleep(5)
         lines = read_temp_raw()
+        if lines == None:
+            return 0
     equals_pos = lines[1].find('t=')
     if equals_pos != -1:
         temp_string = lines[1][equals_pos+2:]
