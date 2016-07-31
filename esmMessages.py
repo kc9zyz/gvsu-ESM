@@ -26,6 +26,7 @@ class esmMessage(AutoNumber):
     panelUpdate = ()
 
     # Battery Messages
+    battery = ()
     batteryLow = ()
     batteryCritical = ()
 

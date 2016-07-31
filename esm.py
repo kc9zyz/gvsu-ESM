@@ -179,6 +179,7 @@ class esm:
         # Loop until time to exit
         while not self.exitAllThreads:
             level = esmBatteryMonitor.batteryLevel(self.adc)
+            queue.put((em.battery,level[0]))
             if level[0] == 50:
                 warnings['battLow'][1] = True
                 self.esmGPIO.output(esmGPIO.ssr,True)
@@ -246,6 +247,9 @@ class esm:
 
                 elif item[0] == em.anemometer:
                     esmTrailerBackend.update(windspeed=item[1])
+
+                elif item[0] == em.battery:
+                    esmTrailerBackend.update(battery=item[1])
 
 
                 if update.ready():
