@@ -47,7 +47,7 @@ class esmDCLoad:
                 byte = self.respQ.get(True,1)
                 message += byte
             except queue.Empty:
-                self.dprint(ps.mppt,'Nothing in the queue')
+                self.dprint(ps.mppt,'Nothing in the serial queue, DC load did not respond')
                 raise
         return message
 

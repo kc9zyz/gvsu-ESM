@@ -16,7 +16,7 @@ class esmDataPoint:
         self.lat = 0
         self.lon = 0
         self.heading = 0
-        self.panel_angle = 0
+        self.panelAngle = 0
 
 class esmWebInterface:
     def __init__(self, host, key):
@@ -105,6 +105,14 @@ class esmWebInterface:
         if r.status_code == 401:
             self.backlog(dataPoint, m.hexdigest())
         return r
+
+    def connected(self):
+        try:
+            r = requests.get(self.url + '?asset=current-data',timeout=5)
+        except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
+            return False
+        return True
+
 
 
 

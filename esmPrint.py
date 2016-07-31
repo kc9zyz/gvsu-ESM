@@ -1,4 +1,6 @@
 from enum import Enum
+import logging
+import threading
 
 class esmPrintSource(Enum):
     # Serial
@@ -23,15 +25,25 @@ class esmPrint():
     moduleInit = None
     def dprint(self,source, text):
         if self.toFile == True:
-            #write to file
+            #write to log
+            self.logger.info(source.value[1]+text)
+
             pass
         else:
             print(source.value[1]+text)
         return False
 
-    def __init__(self, toFile):
+    def __init__(self, toFile=False):
         if toFile == True:
             self.toFile = True
         else:
             self.toFile = False
         self.moduleInit = True;
+
+        # Setup logger
+        self.logger = logging.getLogger('esm')
+        hdlr = logging.FileHandler('/tmp/log/esm.log')
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        hdlr.setFormatter(formatter)
+        self.logger.addHandler(hdlr)
+        self.logger.setLevel(logging.INFO)

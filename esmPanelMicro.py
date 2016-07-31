@@ -7,6 +7,7 @@ import datetime
 import threading
 import json
 import sys
+import pickle
 
 class panelThread(threading.Thread):
 
@@ -20,39 +21,46 @@ class panelThread(threading.Thread):
         while not self.end:
             message = bytearray()
             byte = b'0'
+            i = 0
             while byte != b'\n' and not self.end:
                 try:
                     byte = self.respQ.get(True,1)
                     message += byte
                 except queue.Empty:
+                    self.panelMicro.pitch = i
+                    i+=1
+                    self.panelMicro.update = True
                     pass
             if not self.end:
                 data = json.loads(str(message,'ascii'))
-                # Update the panel variables with the 
+                # Update the panel variables with the received information 
                 try:
                     self.panelMicro.location = (data['lat'], data['long'])
+                    self.panelMicro.update = True
                 except KeyError:
                     pass
 
                 try:
                     self.panelMicro.heading = data['heading']
+                    self.panelMicro.update = True
                 except KeyError:
                     pass
 
                 try:
                     self.panelMicro.pitch = data['pitch']
-                    print(self.panelMicro.pitch, 'Deg')
+                    self.panelMicro.update = True
                 except KeyError:
                     pass
 
                 try:
                     self.panelMicro.roll = data['roll']
+                    self.panelMicro.update = True
                 except KeyError:
                     pass
 
                 try:
                     self.panelMicro.temp = data['temp']
-                    print(self.panelMicro.temp,'F')
+                    self.panelMicro.update = True
                 except KeyError:
                     pass
 
@@ -67,9 +75,22 @@ class panelThread(threading.Thread):
                     second = (int(time) % 100)
 
                     self.panelMicro.timestamp = datetime.datetime(year,month,day,hour,minute,second)
+                    self.panelMicro.update = True
 
                 except KeyError:
                     pass
+
+                # Save last data for reload
+                toPickle = {
+                        'location' : self.panelMicro.location,
+                        'timestamp' : self.panelMicro.timestamp,
+                        'heading' : self.panelMicro.heading,
+                        'pitch' : self.panelMicro.pitch,
+                        'roll' : self.panelMicro.roll,
+                        'temp' : self.panelMicro.temp,
+                        }
+                with open('lastPoint','wb') as afile:
+                    pickle.dump(toPickle,afile)
 
 
 
@@ -78,8 +99,8 @@ class panelThread(threading.Thread):
 
 
 class esmPanelMicro:
-    def __init__(self, Dprint, respQ):
-        self.respQ = respQ
+    def __init__(self, Dprint):
+        self.respQ = Queue()
         self.dprint = Dprint.dprint
 
         # Instantiate position variables
@@ -89,6 +110,22 @@ class esmPanelMicro:
         self.pitch = 0.0
         self.roll = 0.0
         self.temp = 0.0
+        # Save last data for reload
+        try:
+            with open('lastPoint','rb') as afile:
+                toPickle = pickle.load(afile)
+
+                self.location = toPickle['location']
+                self.timestamp = toPickle['timestamp']
+                self.heading = toPickle['heading']
+                self.pitch = toPickle['pitch']
+                self.roll = toPickle['roll']
+                self.temp =  toPickle['temp']
+        except FileNotFoundError:
+            # No previous points were saved
+            pass
+
+        self.update = False
 
         # Spawn thread to handler inter-process communication
         self.panelThread = panelThread(self,self.respQ,self.dprint)
@@ -96,4 +133,7 @@ class esmPanelMicro:
     def close(self):
         self.panelThread.stop()
         self.panelThread.join()
+
+    def __exit__(self,exc_type, exc_value, traceback):
+        self.close()
 

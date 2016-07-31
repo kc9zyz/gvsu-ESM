@@ -11,9 +11,9 @@ class TestPrint(unittest.TestCase):
         self.assertFalse(p.dprint(esmPrint.esmPrintSource.serial,"Test"))
 
     def test_noInit(self):
-        with self.assertRaises(TypeError):
-            q = esmPrint.esmPrint()
-        #self.assertRaises(q.dprint(esmPrint.esmPrintSource.serial,"Test"))
+        q = esmPrint.esmPrint()
+        self.assertFalse(q.toFile)
+
 
     def tearDown(self):
         pass

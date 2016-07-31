@@ -4,6 +4,7 @@ import esmPrint
 import esmGPIO
 import esmWebInterface
 import esmTrailerBackend
+import esmPanelMicro
 from multiprocessing import Queue
 import queue as Queue2
 from threading import Thread
@@ -11,6 +12,8 @@ from esmMessages import esmMessage as em
 from esmPrint import esmPrintSource as ps
 import time
 import esmTemp
+import datetime
+
 
 elSer = '/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_D-if00-port0'
 pmSer = '/dev/serial/by-id/usb-Teensyduino_USB_Serial_1697620-if00'
@@ -21,16 +24,17 @@ boxHighTempCancel = 95
 
 # Contains a list of warnings
 warnings = {
-        'battLow' : ('Battery Low' , False),
-        'battCrit' : ('Battery Critical' , False),
-        'windHigh' : ('High Wind', False),
-        'windCrit' : ('Critical Wind', False),
+        'battLow' : ['Battery Low' , False],
+        'battCrit' : ['Battery Critical' , False],
+        'windHigh' : ['High Wind', False],
+        'windCrit' : ['Critical Wind', False],
+        'tempCrit' : ['Critical Temperature', False],
         }
 
 # Contains a list of messages
 messages = {
-        'notDeployed' : ('System Not Deployed' , False),
-        'boxWarm' : ('Electrical box is warm' , False),
+        'notDeployed' : ['System Not Deployed' , False],
+        'boxWarm' : ['Electrical box is warm' , False],
         }
 
 class updateHolder:
@@ -59,6 +63,8 @@ class esm:
             # Measure the panels
             self.esmGPIO.output(esmGPIO.dcLoadRelay,False)
             result = self.dc.trackMPPT(self.s,10000)
+            #
+            # Check to see if the operation succeeded
             if result[0]:
                 queue.put((em.dcLoadPanel,result[1]))
             else:
@@ -67,6 +73,8 @@ class esm:
             # Measure the shingles
             self.esmGPIO.output(esmGPIO.dcLoadRelay,True)
             result = self.dc.trackMPPT(self.s,10000)
+
+            # Check to see if the operation succeeded
             if result[0]:
                 queue.put((em.dcLoadShingle,result[1]))
             else:
@@ -81,13 +89,22 @@ class esm:
             # Remove the execution time from the delay to remove drift
             while time.time() < endTime:
                 if not self.exitAllThreads:
-                    time.sleep(5)
+                    time.sleep(1)
                 else:
                     self.dprint(ps.main, 'DC Load thread Exiting')
                     return
 
     # Handles monitoring of the panel measurement microcontroller
     def panelMicroThread(self, queue):
+        while not self.exitAllThreads:
+            if self.pm.update:
+                queue.put((em.panelUpdate,))
+
+                # Reset the update value
+                self.pm.update = False
+
+            else:
+                time.sleep(1)
         return
 
     # Handles monitoring the temperature of the electrical box
@@ -98,9 +115,11 @@ class esm:
             if not self.fanMode and temp > boxHighTemp:
                 self.fanMode = True
                 messages['boxWarm'] = True
+                self.esmGPIO.output(esmGPIO.fanRelay,True)
             elif self.fanMode and temp < boxHighTempCancel:
                 self.fanMode = False
                 messages['boxWarm'] = False
+                self.esmGPIO.output(esmGPIO.fanRelay,False)
             time.sleep(1)
 
         self.dprint(ps.main, 'Temperature thread Exiting')
@@ -108,7 +127,8 @@ class esm:
 
     # Send an update when ready
     def sendUpdate(self):
-        self.webInterface.sendUpdate(self.dp)
+        if self.webInterface.sendUpdate(self.dp).status_code == 200:
+            self.webInterface.flushBacklog()
         for a in update.updates:
             update.updates[a] = False
 
@@ -122,17 +142,38 @@ class esm:
                 # Long handler if-else
                 if item[0] == em.dcLoadPanel:
                     # Update the panel data
-                    dp.panelOutput = item[1]
+                    self.dp.panelOutput = item[1]
                     update.updates['panelReady'] = True
 
                 elif item[0] == em.dcLoadShingle:
                     # Update the shingle data
-                    dp.shingleOutput = item[1]
+                    self.dp.shingleOutput = item[1]
                     update.updates['shingleReady'] = True
 
 
                 elif item[0] == em.dcLoadError:
                     self.dprint(ps.main, 'DC load issue with: '+item[1].name)
+
+                elif item[0] == em.panelUpdate:
+                    # Update the data point
+                    self.dp.lat = self.pm.location[0]
+                    self.dp.lon = self.pm.location[1]
+                    self.dp.timestamp = datetime.datetime.now()
+                    self.dp.heading = self.pm.heading
+                    self.dp.panelAngle = self.pm.pitch
+                    update.updates['panelUpdateReady'] = True
+
+                    # Update the trailer backend
+                    if self.dp.panelAngle < 10:
+                       messages['notDeployed'][1] = True
+                    else:
+                       messages['notDeployed'][1] = False
+                    esmTrailerBackend.update(
+                            panelAngle = self.dp.panelAngle,
+                            panelTemp = self.pm.temp
+                            )
+
+
 
                 if update.ready():
                     # Data point is ready, send
@@ -154,8 +195,13 @@ class esm:
         output = (False,200)
 
         # Setup the debug print interface
-        self.p = esmPrint.esmPrint(False)
+        self.p = esmPrint.esmPrint(True)
         self.dprint = self.p.dprint
+        self.dprint(ps.main, '')
+        self.dprint(ps.main, '********************')
+        self.dprint(ps.main, 'ESM Started')
+        self.dprint(ps.main, '*********************')
+        self.dprint(ps.main, '')
 
         # Setup the DC load object
         self.dc = esmDCLoad.esmDCLoad(self.p)
@@ -185,6 +231,9 @@ class esm:
         # Setup temperature sensor
         esmTemp.setup()
 
+        # Setup the panel micro
+        self.pm = esmPanelMicro.esmPanelMicro(self.p)
+
         # Create threads container
         self.threads = []
 
@@ -195,11 +244,13 @@ class esm:
 
         self.threads.append(Thread(target=self.tempThread,args=(self.queue,)))
 
+        self.threads.append(Thread(target=self.panelMicroThread,args=(self.queue,)))
+
         for th in self.threads:
             th.start()
 
         # Create the datapoint
-        dp = esmWebInterface.esmDataPoint()
+        self.dp = esmWebInterface.esmDataPoint()
 
 
     def shutdown(self):
@@ -208,6 +259,9 @@ class esm:
 
         # Shutdown the trailer backend
         esmTrailerBackend.stop()
+
+        # close the panel micro
+        self.pm.close()
 
         self.exitAllThreads = True
 
@@ -227,7 +281,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
 
