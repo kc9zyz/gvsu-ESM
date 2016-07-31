@@ -144,7 +144,7 @@ class esm:
     # Handles monitoring the wind speed
     def windThread(self, queue):
         while not self.exitAllThreads:
-            speed = esmAnemometer(self.adc)
+            speed = esmAnemometer.windspeed(self.adc)
             queue.put((em.anemometer,speed))
             if speed > 40:
                 warnings['windCrit'][1] = True
@@ -345,6 +345,8 @@ class esm:
         self.threads.append(Thread(target=self.panelMicroThread,args=(self.queue,)))
 
         self.threads.append(Thread(target=self.batteryThread,args=(self.queue,)))
+
+        self.threads.append(Thread(target=self.windThread,args=(self.queue,)))
 
         for th in self.threads:
             th.start()
