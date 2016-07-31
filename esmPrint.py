@@ -1,6 +1,7 @@
 from enum import Enum
 import logging
 import threading
+import os
 
 class esmPrintSource(Enum):
     # Serial
@@ -41,6 +42,8 @@ class esmPrint():
         self.moduleInit = True;
 
         # Setup logger
+        if not os.path.exists('/tmp/log/'):
+            os.makedirs('/tmp/log/')
         self.logger = logging.getLogger('esm')
         hdlr = logging.FileHandler('/tmp/log/esm.log')
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
