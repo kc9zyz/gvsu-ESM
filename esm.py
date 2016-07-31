@@ -118,6 +118,7 @@ class esm:
         # Loop until time to exit
         while not self.exitAllThreads:
             temp = esmTemp.read_temp()
+            queue.put((em.boxTemp,temp))
             if not self.fanMode and temp > boxHighTemp:
                 self.fanMode = True
                 messages['boxWarm'][1] = True
@@ -250,6 +251,9 @@ class esm:
 
                 elif item[0] == em.battery:
                     esmTrailerBackend.update(battery=item[1])
+
+                elif item[0] == em.boxTemp:
+                    esmTrailerBackend.update(boxTemp=item[1])
 
 
                 if update.ready():
