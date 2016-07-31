@@ -38,7 +38,7 @@ def read_temp(dprint, gpio):
         return 0
     # Convert the data to temperature count
     while lines[0].strip()[-3:] != 'YES':
-        self.dprint(ps.temp, 'Resetting Sensor')
+        dprint(ps.temp, 'Resetting Sensor')
         gpio.output(esmGPIO.tempSensor,False);
         time.sleep(2)
         gpio.output(esmGPIO.tempSensor,True);
