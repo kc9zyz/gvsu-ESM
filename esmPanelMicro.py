@@ -24,13 +24,12 @@ class panelThread(threading.Thread):
             i = 0
             while byte != b'\n' and not self.end:
                 try:
-                    byte = self.respQ.get(True,1)
+                    byte = self.respQ.get(True,10)
                     message += byte
+                    self.panelMicro.error = False
                 except queue.Empty:
-                    self.panelMicro.pitch = i
-                    i+=1
-                    self.panelMicro.update = True
-                    pass
+                    self.panelMicro.error = True
+
             if not self.end:
                 data = json.loads(str(message,'ascii'))
                 # Update the panel variables with the received information 
@@ -110,6 +109,7 @@ class esmPanelMicro:
         self.pitch = 0.0
         self.roll = 0.0
         self.temp = 0.0
+        self.error = False
         # Save last data for reload
         try:
             with open('lastPoint','rb') as afile:

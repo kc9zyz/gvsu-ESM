@@ -20,6 +20,10 @@ DATA3_U = 0x08
 DATA3_L = 0x09
 ADDRESS = 0x48
 
+chan0Scale = 1
+chan1Scale = 1
+chan2Scale = 1
+
 class esmADC:
     def __init__(self):
         self.bus = smbus.SMBus(1)
@@ -41,16 +45,21 @@ class esmADC:
                 chan0 = self.bus.read_byte_data(self.address,DATA0_U) << 4
                 chan0 = chan0 + (self.bus.read_byte_data(self.address,DATA0_L) >> 4)
                 chan0 = chan0 * (5/4096)
-        
+                chan0 *= chan0Scale
+
                 chan1 = self.bus.read_byte_data(self.address,DATA1_U) << 4
                 chan1 = chan1 + (self.bus.read_byte_data(self.address,DATA1_L) >> 4)
                 chan1 = chan1 * (5/4096)
-        
+                chan1 *= chan1Scale
+
                 chan2 = self.bus.read_byte_data(self.address,DATA2_U) << 4
                 chan2 = chan2 + (self.bus.read_byte_data(self.address,DATA2_L) >> 4)
                 chan2 = chan2 * (5/4096)
-        
+                chan2 *= chan2Scale
+
                 self.bus.write_byte_data(self.address,MODECNTRL,auto_scan)
                 return (chan0,chan1,chan2)
             except:
                 pass
+
+        return (0,0,0)

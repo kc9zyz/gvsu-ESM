@@ -13,6 +13,9 @@ from esmPrint import esmPrintSource as ps
 import time
 import esmTemp
 import datetime
+import esmADC
+import esmBatteryMonitor
+import esmAnemometer
 
 
 elSer = '/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_D-if00-port0'
@@ -24,17 +27,17 @@ boxHighTempCancel = 95
 
 # Contains a list of warnings
 warnings = {
-        'battLow' : ['Battery Low' , False],
-        'battCrit' : ['Battery Critical' , False],
-        'windHigh' : ['High Wind', False],
-        'windCrit' : ['Critical Wind', False],
-        'tempCrit' : ['Critical Temperature', False],
+        'battLow' : ['Battery Low ' , False],
+        'battCrit' : ['Battery Critical ' , False],
+        'windHigh' : ['High Wind ', False],
+        'windCrit' : ['Critical Wind ', False],
+        'tempCrit' : ['Critical Temperature ', False],
         }
 
 # Contains a list of messages
 messages = {
-        'notDeployed' : ['System Not Deployed' , False],
-        'boxWarm' : ['Electrical box is warm' , False],
+        'notDeployed' : ['System Not Deployed ' , False],
+        'boxWarm' : ['Electrical box is warm ' , False],
         }
 
 class updateHolder:
@@ -104,6 +107,9 @@ class esm:
                 self.pm.update = False
 
             else:
+                if self.pm.error:
+                    self.dprint(ps.main, 'Panel measurement micro not responding')
+
                 time.sleep(1)
         return
 
@@ -114,16 +120,81 @@ class esm:
             temp = esmTemp.read_temp()
             if not self.fanMode and temp > boxHighTemp:
                 self.fanMode = True
-                messages['boxWarm'] = True
+                messages['boxWarm'][1] = True
                 self.esmGPIO.output(esmGPIO.fanRelay,True)
             elif self.fanMode and temp < boxHighTempCancel:
                 self.fanMode = False
-                messages['boxWarm'] = False
+                messages['boxWarm'][1] = False
                 self.esmGPIO.output(esmGPIO.fanRelay,False)
             time.sleep(1)
 
         self.dprint(ps.main, 'Temperature thread Exiting')
 
+
+    def soundAlarm(self):
+        # Cycle the alarm on 1 second chirps
+        for i in range(0,10):
+            self.esmGPIO.output(esmGPIO.buzzerRelay,True)
+            time.sleep(1)
+            self.esmGPIO.output(esmGPIO.buzzerRelay,False)
+            time.sleep(1)
+
+    # Handles monitoring the wind speed
+    def windThread(self, queue):
+        while not self.exitAllThreads:
+            speed = esmAnemometer(self.adc)
+            queue.put((em.anemometer,speed))
+            if speed > 40:
+                warnings['windCrit'][1] = True
+                # Wind overspeed detected!
+                # Check to see if system is deployed
+                if self.dp.panelAngle > 10:
+
+                    self.dprint(ps.main, 'Wind Speed CRITICAL')
+                    # Sound alarm
+                    self.soundAlarm()
+
+                    # Retract panels
+                    self.esmGPIO.output(esmGPIO.retractRelay,True)
+                    timeout = 0
+                    while self.dp.panelAngle > 10 or timeout > 120:
+                        timeout += 1
+                        time.sleep(1)
+            # Check if windspeed exceeds high threshold
+            elif speed > 25:
+                warnings['windHigh'][1] = True
+                warnings['windCrit'][1] = False
+            # Wind speed is safe
+            else:
+                warnings['windHigh'][1] = False
+                warnings['windCrit'][1] = False
+
+            time.sleep(1)
+
+        self.dprint(ps.main, 'Wind Thread Started')
+
+
+    # Monitors SOC of batteries
+    def batteryThread(self, queue):
+        # Loop until time to exit
+        while not self.exitAllThreads:
+            level = esmBatteryMonitor.batteryLevel(self.adc)
+            if level[0] == 50:
+                warnings['battLow'][1] = True
+                self.esmGPIO.output(esmGPIO.ssr,True)
+            elif level[0] <25:
+                warnings['battLow'][1] = False
+                warnings['battCrit'][1] = True
+                self.esmGPIO.output(esmGPIO.ssr,True)
+            else:
+                warnings['battLow'][1] = False
+                warnings['battCrit'][1] = False
+                self.esmGPIO.output(esmGPIO.ssr,False)
+
+
+            time.sleep(5)
+
+        self.dprint(ps.main, 'Battery Thread Started')
 
     # Send an update when ready
     def sendUpdate(self):
@@ -173,11 +244,26 @@ class esm:
                             panelTemp = self.pm.temp
                             )
 
+                elif item[0] == em.anemometer:
+                    esmTrailerBackend.update(windspeed=item[1])
 
 
                 if update.ready():
                     # Data point is ready, send
                     self.sendUpdate()
+
+                # Update all messages and warnings
+                warningText = ''
+                for warn in warnings:
+                    if warnings[warn][1]:
+                        warningText += warnings[warn][0]
+
+                messageText = ''
+                for msg in messages:
+                    if messages[msg][1]:
+                        messageText += messages[msg][0]
+                esmTrailerBackend.update(warning = warningText,message = messageText)
+
 
             except Queue2.Empty:
                 pass
@@ -234,6 +320,9 @@ class esm:
         # Setup the panel micro
         self.pm = esmPanelMicro.esmPanelMicro(self.p)
 
+        # Setup the ADC
+        self.adc = esmADC.esmADC()
+
         # Create threads container
         self.threads = []
 
@@ -245,6 +334,8 @@ class esm:
         self.threads.append(Thread(target=self.tempThread,args=(self.queue,)))
 
         self.threads.append(Thread(target=self.panelMicroThread,args=(self.queue,)))
+
+        self.threads.append(Thread(target=self.batteryThread,args=(self.queue,)))
 
         for th in self.threads:
             th.start()

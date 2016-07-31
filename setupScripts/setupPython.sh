@@ -1,3 +1,9 @@
+if [ "$1" == "" ];
+then
+   echo "Password not specified"
+   kill -INT $$
+fi
+echo "$1" > pass
 virtualenv -p python3 --system-site-packages myenv
 . myenv/bin/activate
 pip install -r requirements.txt

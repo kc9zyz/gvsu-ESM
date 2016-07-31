@@ -1,5 +1,6 @@
 from enum import Enum
 import logging
+import logging.handlers
 import threading
 import os
 
@@ -45,7 +46,7 @@ class esmPrint():
         if not os.path.exists('/tmp/log/'):
             os.makedirs('/tmp/log/')
         self.logger = logging.getLogger('esm')
-        hdlr = logging.FileHandler('/tmp/log/esm.log')
+        hdlr = logging.handlers.RotatingFileHandler('/tmp/log/esm.log',maxBytes=100000, backupCount=1000)
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
         hdlr.setFormatter(formatter)
         self.logger.addHandler(hdlr)
