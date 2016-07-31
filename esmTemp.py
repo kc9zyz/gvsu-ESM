@@ -30,27 +30,21 @@ def read_temp_raw():
 # Convert the information from raw reads to degrees f
 def read_temp():
     temp_f = []
-    # Read the temperature twice, ensure that the readings are consistent
-    for i in range(0,3):
+    # Read the temperature
+    lines = read_temp_raw()
+    if lines == None:
+        return 0
+    # Convert the data to temperature count
+    while lines[0].strip()[-3:] != 'YES':
+        time.sleep(1)
         lines = read_temp_raw()
-        if lines == None:
-            return 0
-        # Convert the data to temperature count
-        while lines[0].strip()[-3:] != 'YES':
-            time.sleep(0.2)
-            lines = read_temp_raw()
-        equals_pos = lines[1].find('t=')
-        if equals_pos != -1:
-            temp_string = lines[1][equals_pos+2:]
-            temp_c = float(temp_string) / 1000.0
-            temp_f.append( temp_c * 9.0 / 5.0 + 32.0)
-    # Check to see if standard deviation is less than 2 degrees f
-    if statistics.stdev(temp_f) > 2:
-        # Return nothing if the data is invalid
-        return None
-    else:
-        # Otherwise, return the median of the measured temperatures
-        return float(round(decimal.Decimal(statistics.median_grouped(temp_f)),2))
+    equals_pos = lines[1].find('t=')
+    if equals_pos != -1:
+        temp_string = lines[1][equals_pos+2:]
+        temp_c = float(temp_string) / 1000.0
+        temp_f. =  temp_c * 9.0 / 5.0 + 32.0
+    # Otherwise, return the median of the measured temperatures
+    return float(round(decimal.Decimal(temp_f),0))
 
 def setup():
     # Setup the temperature system

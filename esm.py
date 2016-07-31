@@ -16,6 +16,7 @@ import datetime
 import esmADC
 import esmBatteryMonitor
 import esmAnemometer
+import math
 
 
 elSer = '/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_D-if00-port0'
@@ -127,7 +128,7 @@ class esm:
                 self.fanMode = False
                 messages['boxWarm'][1] = False
                 self.esmGPIO.output(esmGPIO.fanRelay,False)
-            time.sleep(1)
+            time.sleep(5)
 
         self.dprint(ps.main, 'Temperature thread Exiting')
 
@@ -253,7 +254,7 @@ class esm:
                     esmTrailerBackend.update(battery=item[1])
 
                 elif item[0] == em.boxTemp:
-                    esmTrailerBackend.update(boxTemp=item[1])
+                    esmTrailerBackend.update(boxTemp=math.floor(item[1]))
 
 
                 if update.ready():
