@@ -18,36 +18,39 @@ class esmLeds():
                 [1,7],
                 [0,8],
                 ]
-        self.strinp = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
+        self.strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
+        self.strip.begin()
 
 
     def showLevel(self,level,lastBrightness):
+        # Neopixels are GRB, not RGB
         ledColors = [
-                [255,0,0],
-                [255,179,0],
-                [255,251,0],
                 [0,255,0],
-                [0,255,0]
+                [179,255,0],
+                [251,255,0],
+                [255,0,0],
+                [255,0,0]
                 ]
 
+        # Scale the last pixel by the amount
         levelColor = ledColors[level]
-        levelHsv = list(colorsys.rgb_to_hsv(levelColor[0],levelColor[1],levelColor[2]))
-        levelHsv[2] *= lastBrightness
-        levelHsv[2] = int(levelHsv)
-        levelColor = list(colorsys.hsv_to_rgb(levelHsv[0],levelHsv[1],levelHsv[2]))
+        for i in range(0,len(levelColor)):
+            levelColor[i] = int(levelColor[i] * lastBrightness)
+        ledColors[level] = levelColor
 
         # Loop through LEDs
         for i in range(0,level+1):
-            ledGroup = self.leds[i]
+            ledgroup = self.leds[i]
             color = ledColors[i]
             neoColor = Color(color[0],color[1],color[2])
             for led in ledgroup:
-                self.strip.setPIxelColor(led,neoColor)
+                self.strip.setPixelColor(led,neoColor)
 
         # Blank the remaining LEDs
         for i in range(level+1,len(self.leds)):
-            ledGroup = self.leds[i]
+            ledgroup = self.leds[i]
             for led in ledgroup:
-                self.strip.setPIxelColor(led,Color(0,0,0,))
+                self.strip.setPixelColor(led,Color(0,0,0,))
+        self.strip.show()
 
 
