@@ -1,6 +1,7 @@
 BOARD = 0
 BCM = 0
 OUT = 0
+IN = 0
 LOW = 0
 HIGH = 0
 def setmode(*args, **kw):
@@ -11,3 +12,8 @@ def output(*args, **kw):
     return None
 def input(*args, **kw):
     return True
+def setwarnings(*args, **kw):
+    return True
+
+
+
