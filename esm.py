@@ -20,7 +20,7 @@ import math
 
 
 elSer = '/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_D-if00-port0'
-pmSer = '/dev/tty.usbmodem1697621'#'/dev/serial/by-id/usb-Teensyduino_USB_Serial_1697620-if00'
+pmSer = '/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0'
 
 boxHighTemp = 87
 boxHighTempCancel = 85
@@ -174,7 +174,7 @@ class esm:
 
             time.sleep(1)
 
-        self.dprint(ps.main, 'Wind Thread Started')
+        self.dprint(ps.main, 'Wind Thread Exiting')
 
 
     # Monitors SOC of batteries
@@ -198,7 +198,7 @@ class esm:
 
             time.sleep(5)
 
-        self.dprint(ps.main, 'Battery Thread Started')
+        self.dprint(ps.main, 'Battery Thread Exiting')
 
     # Send an update when ready
     def sendUpdate(self):

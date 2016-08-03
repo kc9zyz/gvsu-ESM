@@ -70,15 +70,10 @@ class panelThread(threading.Thread):
                     month = int(date / 100) % 100
                     year = (int(date) % 100) + 2000
                     hour = int(time / 1000000)
-                    minute = int(time / 10000)
+                    minute = int(time / 10000) % 100
                     second = int(time / 100) % 100
 
-                    print(year)
-                    print(month)
-                    print(day)
-                    print(hour)
-                    print(minute)
-                    print(second)
+                   
                     self.panelMicro.timestamp = datetime.datetime(year,month,day,hour,minute,second)
                     self.panelMicro.update = True
 
