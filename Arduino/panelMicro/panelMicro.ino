@@ -1,6 +1,6 @@
 /*
- * Contains the code for interacting with the panel measurement microcontroller
- */
+   Contains the code for interacting with the panel measurement microcontroller
+*/
 
 
 #include <TinyGPS.h>
@@ -29,6 +29,7 @@ LSM9DS1 imu;
 
 // Teensy has an extra hardware UART, we are using UART2
 #define Uart Serial2
+#define Uart2 Serial1
 
 // Function prototypes
 void gpsdump(TinyGPS &gps);
@@ -44,7 +45,7 @@ void printError();
 void setup()
 {
   // Start the serial connection between the micro and the Raspberry Pi
-  Serial.begin(115200);
+  Uart2.begin(115200);
 
   // Start the serial communication to the GPS module
   Uart.begin(9600);
@@ -95,7 +96,7 @@ void loop()
     // Dump the temperature sensor
     getTemp();
   }
-  else{
+  else {
     // Dump the IMU data
     getIMU();
 
@@ -107,7 +108,7 @@ void loop()
 // Print an error if there is something wrong with initialization
 void printError()
 {
-  Serial.println("{\"error: 1}");
+  Uart2.println("{\"error: 1}");
 }
 
 
@@ -128,9 +129,9 @@ void getIMU()
   float pitch = atan2(-imu.ax, sqrt(imu.ay * imu.ay + imu.az * imu.az));
 
   // Apply Magnetometer offset
-  imu.mx-=955;
-  imu.my-=1392;
-  imu.mz+=594;
+  imu.mx -= 955;
+  imu.my -= 1392;
+  imu.mz += 594;
 
   // Compute the heading from IMU data
   float heading;
@@ -153,15 +154,15 @@ void getIMU()
   roll  *= 180.0 / PI;
 
   // Print out the IMU data to
-  Serial.print("{\"pitch\":");
-  Serial.print(pitch, 2);
-  Serial.print(", ");
-  Serial.print("\"roll\":");
-  Serial.print(roll, 2);
-  Serial.print(", ");
-  Serial.print("\"heading\":");
-  Serial.print(heading, 2);
-  Serial.print("}\n");
+  Uart2.print("{\"pitch\":");
+  Uart2.print(pitch, 2);
+  Uart2.print(", ");
+  Uart2.print("\"roll\":");
+  Uart2.print(roll, 2);
+  Uart2.print(", ");
+  Uart2.print("\"heading\":");
+  Uart2.print(heading, 2);
+  Uart2.print("}\n");
 
 }
 
@@ -183,7 +184,7 @@ void getTemp()
     ds.reset_search();
     delay(250);
     retries++;
-    if(retries > 5)
+    if (retries > 5)
     {
       // If the retries are exhausted, return from the function
       return;
@@ -199,8 +200,8 @@ void getTemp()
 
   // Verify that the address CRC matches the computed CRC
   if (OneWire::crc8(addr, 7) != addr[7]) {
-      Serial.println("{\"temp: -1}");
-      return;
+    Uart2.println("{\"temp: -1}");
+    return;
   }
 
   // the first ROM byte indicates which chip
@@ -215,7 +216,7 @@ void getTemp()
       type_s = 0;
       break;
     default:
-      Serial.println("{\"temp: -1}");
+      Uart2.println("{\"temp: -1}");
       return;
   }
 
@@ -263,9 +264,9 @@ void getTemp()
   fahrenheit = celsius * 1.8 + 32.0;
 
   // Report the results
-  Serial.print("{\"temp\":");
-  Serial.print(fahrenheit, 2);
-  Serial.print("}\n");
+  Uart2.print("{\"temp\":");
+  Uart2.print(fahrenheit, 2);
+  Uart2.print("}\n");
 }
 
 // Handle the GPS data
@@ -285,16 +286,16 @@ void gpsdump(TinyGPS &gps)
   gps.get_datetime(&date, &time, &age);
 
   // Print the results of the GPS acquisition
-  Serial.print("{\"lat\":");
-  Serial.print(lat);
-  Serial.print(", ");
-  Serial.print("\"long\":");
-  Serial.print(lon);
-  Serial.print(", ");
-  Serial.print("\"date\":");
-  Serial.print(date);
-  Serial.print(", ");
-  Serial.print("\"time\":");
-  Serial.print(time);
-  Serial.print("}\n");
+  Uart2.print("{\"lat\":");
+  Uart2.print(lat);
+  Uart2.print(", ");
+  Uart2.print("\"long\":");
+  Uart2.print(lon);
+  Uart2.print(", ");
+  Uart2.print("\"date\":");
+  Uart2.print(date);
+  Uart2.print(", ");
+  Uart2.print("\"time\":");
+  Uart2.print(time);
+  Uart2.print("}\n");
 }
