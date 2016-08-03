@@ -47,6 +47,7 @@ class panelThread(threading.Thread):
 
                 try:
                     self.panelMicro.pitch = data['pitch']
+                    self.panelMicro.pitch = -self.panelMicro.pitch 
                     self.panelMicro.update = True
                 except KeyError:
                     pass

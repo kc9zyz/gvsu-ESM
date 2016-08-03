@@ -25,7 +25,7 @@ class TestPMMethods(unittest.TestCase):
         for c in '{"pitch" : 17.0}\n':
             pm.respQ.put(c.encode('ascii'))
         time.sleep(0.02);
-        self.assertEqual(pm.pitch,17)
+        self.assertEqual(pm.pitch,-17)
 
         for c in '{"roll" : 13.0}\n':
             pm.respQ.put(c.encode('ascii'))
