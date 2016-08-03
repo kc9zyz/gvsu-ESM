@@ -20,10 +20,10 @@ import math
 
 
 elSer = '/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_D-if00-port0'
-pmSer = '/dev/serial/by-id/usb-Teensyduino_USB_Serial_1697620-if00'
+pmSer = '/dev/tty.usbmodem1697621'#'/dev/serial/by-id/usb-Teensyduino_USB_Serial_1697620-if00'
 
-boxHighTemp = 100
-boxHighTempCancel = 95
+boxHighTemp = 87
+boxHighTempCancel = 85
 
 
 # Contains a list of warnings
@@ -87,7 +87,7 @@ class esm:
             # Find the time it takes to run the algorithm
             execTime = time.time()-startTime
             startTime = time.time()
-            endTime = startTime + (10- execTime)
+            endTime = startTime + (60- execTime)
 
             # Wait 5 minutes, checking for exit every 2
             # Remove the execution time from the delay to remove drift
@@ -120,14 +120,14 @@ class esm:
         while not self.exitAllThreads:
             temp = esmTemp.read_temp(self.dprint,self.esmGPIO)
             queue.put((em.boxTemp,temp))
-            if not self.fanMode and temp > boxHighTemp:
+            if temp > boxHighTemp:
                 self.fanMode = True
                 messages['boxWarm'][1] = True
-                self.esmGPIO.output(esmGPIO.fanRelay,True)
-            elif self.fanMode and temp < boxHighTempCancel:
+                self.esmGPIO.output(esmGPIO.fanRelay,False)
+            elif temp < boxHighTempCancel:
                 self.fanMode = False
                 messages['boxWarm'][1] = False
-                self.esmGPIO.output(esmGPIO.fanRelay,False)
+                self.esmGPIO.input(esmGPIO.fanRelay)
             time.sleep(5)
 
         self.dprint(ps.main, 'Temperature thread Exiting')
@@ -136,9 +136,9 @@ class esm:
     def soundAlarm(self):
         # Cycle the alarm on 1 second chirps
         for i in range(0,10):
-            self.esmGPIO.output(esmGPIO.buzzerRelay,True)
-            time.sleep(1)
             self.esmGPIO.output(esmGPIO.buzzerRelay,False)
+            time.sleep(1)
+            self.esmGPIO.input(esmGPIO.buzzerRelay)
             time.sleep(1)
 
     # Handles monitoring the wind speed
@@ -157,11 +157,12 @@ class esm:
                     self.soundAlarm()
 
                     # Retract panels
-                    self.esmGPIO.output(esmGPIO.retractRelay,True)
+                    self.esmGPIO.output(esmGPIO.retractRelay,False)
                     timeout = 0
                     while self.dp.panelAngle > 10 or timeout > 120:
                         timeout += 1
                         time.sleep(1)
+                    self.esmGPIO.input(esmGPIO.retractRelay)
             # Check if windspeed exceeds high threshold
             elif speed > 25:
                 warnings['windHigh'][1] = True
@@ -184,15 +185,15 @@ class esm:
             queue.put((em.battery,level[0]))
             if level[0] == 50:
                 warnings['battLow'][1] = True
-                self.esmGPIO.output(esmGPIO.ssr,True)
+                self.esmGPIO.output(esmGPIO.ssr,False)
             elif level[0] <25:
                 warnings['battLow'][1] = False
                 warnings['battCrit'][1] = True
-                self.esmGPIO.output(esmGPIO.ssr,True)
+                self.esmGPIO.output(esmGPIO.ssr,False)
             else:
                 warnings['battLow'][1] = False
                 warnings['battCrit'][1] = False
-                self.esmGPIO.output(esmGPIO.ssr,False)
+                self.esmGPIO.input(esmGPIO.ssr)
 
 
             time.sleep(5)
@@ -307,10 +308,13 @@ class esm:
         # Setup the web interface
         self.webInterface = esmWebInterface.esmWebInterface('http://cis.gvsu.edu/~neusonw/solar/data/',serverPass)
 
+        # Setup the panel micro
+        self.pm = esmPanelMicro.esmPanelMicro(self.p)
+
         # Setup Serial Ports
         serPorts = [
                 (esmSerial.esmSerialPorts.electronicLoad,elSer,self.dc.getCallback(),38400),
-                (esmSerial.esmSerialPorts.panelMicro,pmSer,self.dc.getCallback(),115200)
+                (esmSerial.esmSerialPorts.panelMicro,pmSer,self.pm.respQ,115200)
                 ]
         self.s = esmSerial.esmSerial(self.p,serPorts)
 
@@ -326,8 +330,6 @@ class esm:
         # Setup temperature sensor
         esmTemp.setup()
 
-        # Setup the panel micro
-        self.pm = esmPanelMicro.esmPanelMicro(self.p)
 
         # Setup the ADC
         self.adc = esmADC.esmADC()
