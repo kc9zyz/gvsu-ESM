@@ -245,7 +245,8 @@ class esm:
                        messages['notDeployed'][1] = False
                     esmTrailerBackend.update(
                             panelAngle = self.dp.panelAngle,
-                            panelTemp = self.pm.temp
+                            panelTemp = self.pm.temp,
+                            heading = self.pm.heading
                             )
 
                 elif item[0] == em.anemometer:

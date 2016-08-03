@@ -12,6 +12,7 @@ data = {
         'panelTemp' : 0,
         'boxTemp' : 0,
         'panelAngle' : 0,
+        'heading' : 0,
         'warning' : '',
         'message' : '',
         'battery' : 0,
