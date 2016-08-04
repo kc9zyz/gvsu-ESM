@@ -22,7 +22,7 @@ import esmLED
 
 elSer = '/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_D-if00-port0'
 pmSer = '/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0'
-ledSer = '/dev/serial/by-id/'
+ledSer = 'usb-Arduino__www.arduino.cc__0044_752373336363510131A2-if00'
 
 boxHighTemp = 105
 boxHighTempCancel = 95

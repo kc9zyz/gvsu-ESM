@@ -21,7 +21,7 @@ DATA3_L = 0x09
 ADDRESS = 0x48
 
 chan0Scale = 1
-chan1Scale = 10
+chan1Scale = 10.19
 chan2Scale = 1
 
 class esmADC:
