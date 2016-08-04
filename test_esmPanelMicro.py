@@ -37,7 +37,7 @@ class TestPMMethods(unittest.TestCase):
         time.sleep(0.02);
         self.assertEqual(pm.temp,73)
 
-        for c in '{"date" : 62116, "time": 11200}\n':
+        for c in '{"date" : 210616, "time": 1120000}\n':
             pm.respQ.put(c.encode('ascii'))
         time.sleep(0.02);
         self.assertEqual(pm.timestamp,datetime.datetime(2016,6,21,1,12,00))

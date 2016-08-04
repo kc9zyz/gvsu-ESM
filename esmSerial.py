@@ -10,6 +10,7 @@ from time import sleep
 class esmSerialPorts(Enum):
     panelMicro = 0
     electronicLoad = 1
+    leds = 2
 class esmSerial():
 
     def write(self,port,msg):
@@ -27,6 +28,8 @@ class esmSerial():
                     #self.dprint(ps.serial,'Value Received')
                     if type(callback) is multiprocessing.queues.Queue:
                         callback.put((port.read(1)))
+                    else:
+                        port.read(1)
             try:
                 item = queue.get_nowait()
                 if item == 'q':

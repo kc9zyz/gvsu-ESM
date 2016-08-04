@@ -17,18 +17,20 @@ import esmADC
 import esmBatteryMonitor
 import esmAnemometer
 import math
+import esmLED
 
 
 elSer = '/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_D-if00-port0'
 pmSer = '/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0'
+ledSer = '/dev/serial/by-id/'
 
-boxHighTemp = 87
-boxHighTempCancel = 85
+boxHighTemp = 105
+boxHighTempCancel = 95
+ledBrightness = 255
 
 
 # Contains a list of warnings
 warnings = {
-        'battLow' : ['Battery Low ' , False],
         'battCrit' : ['Battery Critical ' , False],
         'windHigh' : ['High Wind ', False],
         'windCrit' : ['Critical Wind ', False],
@@ -39,6 +41,7 @@ warnings = {
 messages = {
         'notDeployed' : ['System Not Deployed ' , False],
         'boxWarm' : ['Electrical box is warm ' , False],
+        'battLow' : ['Battery Low ' , False],
         }
 
 class updateHolder:
@@ -75,7 +78,7 @@ class esm:
                 queue.put((em.dcLoadError,em.dcLoadPanel))
 
             # Measure the shingles
-            self.esmGPIO.output(esmGPIO.dcLoadRelay,True)
+            self.esmGPIO.input(esmGPIO.dcLoadRelay)
             result = self.dc.trackMPPT(self.s,10000)
 
             # Check to see if the operation succeeded
@@ -148,9 +151,10 @@ class esm:
             queue.put((em.anemometer,speed))
             if speed > 40:
                 warnings['windCrit'][1] = True
+                self.esmLed.showRed()
                 # Wind overspeed detected!
                 # Check to see if system is deployed
-                if self.dp.panelAngle > 10:
+                if self.dp.panelAngle > 5:
 
                     self.dprint(ps.main, 'Wind Speed CRITICAL')
                     # Sound alarm
@@ -167,6 +171,7 @@ class esm:
             elif speed > 25:
                 warnings['windHigh'][1] = True
                 warnings['windCrit'][1] = False
+                self.esmLed.showRed()
             # Wind speed is safe
             else:
                 warnings['windHigh'][1] = False
@@ -181,22 +186,27 @@ class esm:
     def batteryThread(self, queue):
         # Loop until time to exit
         while not self.exitAllThreads:
+            # Check the battery level
             level = esmBatteryMonitor.batteryLevel(self.adc)
+            self.BatteryLevel = level
             queue.put((em.battery,level[0]))
             if level[0] == 50:
-                warnings['battLow'][1] = True
-                self.esmGPIO.output(esmGPIO.ssr,False)
+                messages['battLow'][1] = True
             elif level[0] <25:
-                warnings['battLow'][1] = False
+                messages['battLow'][1] = False
                 warnings['battCrit'][1] = True
-                self.esmGPIO.output(esmGPIO.ssr,False)
+                if self.dp.panelOutput < 50:
+                    self.esmGPIO.output(esmGPIO.ssr,False)
             else:
-                warnings['battLow'][1] = False
+                messages['battLow'][1] = False
                 warnings['battCrit'][1] = False
                 self.esmGPIO.input(esmGPIO.ssr)
+            if not warnings['windCrit'][1] :
+                self.esmLed.showLevel(int(level[0] / 20),ledBrightness)
+                self.esmLed.showBoxes(ledBrightness)
 
 
-            time.sleep(5)
+            time.sleep(10)
 
         self.dprint(ps.main, 'Battery Thread Exiting')
 
@@ -239,7 +249,7 @@ class esm:
                     update.updates['panelUpdateReady'] = True
 
                     # Update the trailer backend
-                    if self.dp.panelAngle < 10:
+                    if self.dp.panelAngle < 5:
                        messages['notDeployed'][1] = True
                     else:
                        messages['notDeployed'][1] = False
@@ -315,9 +325,13 @@ class esm:
         # Setup Serial Ports
         serPorts = [
                 (esmSerial.esmSerialPorts.electronicLoad,elSer,self.dc.getCallback(),38400),
-                (esmSerial.esmSerialPorts.panelMicro,pmSer,self.pm.respQ,115200)
+                (esmSerial.esmSerialPorts.panelMicro,pmSer,self.pm.respQ,115200),
+                (esmSerial.esmSerialPorts.leds,ledSer,None,115200)
                 ]
         self.s = esmSerial.esmSerial(self.p,serPorts)
+
+        # Setup LED interface
+        self.esmLed = esmLED.esmLeds(self.s)
 
         # Start the trailer display backend
         esmTrailerBackend.startThread()
@@ -334,6 +348,9 @@ class esm:
 
         # Setup the ADC
         self.adc = esmADC.esmADC()
+
+        # Setup battery level reporting
+        self.batteryLevel = 100
 
         # Create threads container
         self.threads = []
@@ -372,6 +389,7 @@ class esm:
 
         for th in self.threads:
             th.join()
+        self.esmGPIO.__init__()
 
     def __enter__(self):
         return self

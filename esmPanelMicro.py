@@ -74,7 +74,6 @@ class panelThread(threading.Thread):
                     minute = int(time / 10000) % 100
                     second = int(time / 100) % 100
 
-                   
                     self.panelMicro.timestamp = datetime.datetime(year,month,day,hour,minute,second)
                     self.panelMicro.update = True
 
