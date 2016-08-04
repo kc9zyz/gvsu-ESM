@@ -22,7 +22,7 @@ import esmLED
 
 elSer = '/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_D-if00-port0'
 pmSer = '/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0'
-ledSer = 'usb-Arduino__www.arduino.cc__0044_752373336363510131A2-if00'
+ledSer = '/dev/serial/by-id/usb-Arduino__www.arduino.cc__0044_752373336363510131A2-if00'
 
 boxHighTemp = 105
 boxHighTempCancel = 95
@@ -188,7 +188,7 @@ class esm:
         while not self.exitAllThreads:
             # Check the battery level
             level = esmBatteryMonitor.batteryLevel(self.adc)
-            self.BatteryLevel = level
+            self.batteryLevel = level[0]
             queue.put((em.battery,level[0]))
             if level[0] == 50:
                 messages['battLow'][1] = True
@@ -201,9 +201,6 @@ class esm:
                 messages['battLow'][1] = False
                 warnings['battCrit'][1] = False
                 self.esmGPIO.input(esmGPIO.ssr)
-            if not warnings['windCrit'][1] :
-                self.esmLed.showLevel(int(level[0] / 20),ledBrightness)
-                self.esmLed.showBoxes(ledBrightness)
 
 
             time.sleep(10)
@@ -216,6 +213,16 @@ class esm:
             self.webInterface.flushBacklog()
         for a in update.updates:
             update.updates[a] = False
+
+    def ledThread(self,queue):
+        time.sleep(5)
+        while not self.exitAllThreads:
+            if not warnings['windCrit'][1] :
+                self.esmLed.showLevel(int(math.ceil(self.batteryLevel / 20)),ledBrightness)
+                time.sleep(12)
+                self.esmLed.showBoxes(ledBrightness)
+                time.sleep(10)
+            time.sleep(1)
 
 
     def mainThread(self,queue):
@@ -302,7 +309,7 @@ class esm:
         output = (False,200)
 
         # Setup the debug print interface
-        self.p = esmPrint.esmPrint(True)
+        self.p = esmPrint.esmPrint(False)
         self.dprint = self.p.dprint
         self.dprint(ps.main, '')
         self.dprint(ps.main, '********************')
@@ -367,6 +374,8 @@ class esm:
         self.threads.append(Thread(target=self.batteryThread,args=(self.queue,)))
 
         self.threads.append(Thread(target=self.windThread,args=(self.queue,)))
+
+        self.threads.append(Thread(target=self.ledThread,args=(self.queue,)))
 
         for th in self.threads:
             th.start()
