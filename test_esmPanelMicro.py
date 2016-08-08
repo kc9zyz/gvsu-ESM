@@ -11,10 +11,10 @@ class TestPMMethods(unittest.TestCase):
         Dprint = esmPrint.esmPrint(False)
         pm = esmPanelMicro.esmPanelMicro(Dprint)
         self.pm = pm
-        for c in '{"lat" : 42.0, "long" : -85.0}\n':
+        for c in '{"lat" : 42964055, "long" : -85677421}\n':
             pm.respQ.put(c.encode('ascii'))
         time.sleep(0.02);
-        self.assertEqual(pm.location,(42.0,-85.0))
+        self.assertEqual(pm.location,(42.964055,-85.677421))
 
 
         for c in '{"heading" : 170.0}\n':

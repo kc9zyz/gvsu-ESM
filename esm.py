@@ -77,7 +77,7 @@ class esm:
             result = self.dc.trackMPPT(self.s,10000)
             #
             # Check to see if the operation succeeded
-            if result[0]:
+            if not result[0]:
                 queue.put((em.dcLoadPanel,result[1]))
             else:
                 queue.put((em.dcLoadError,em.dcLoadPanel))
@@ -87,7 +87,7 @@ class esm:
             result = self.dc.trackMPPT(self.s,10000)
 
             # Check to see if the operation succeeded
-            if result[0]:
+            if not result[0]:
                 queue.put((em.dcLoadShingle,result[1]))
             else:
                 queue.put((em.dcLoadError,em.dcLoadShingle))
@@ -398,8 +398,6 @@ class esm:
 
 
     def shutdown(self):
-        # Shutdown the serial ports
-        self.s.close()
 
         # Shutdown the trailer backend
         esmTrailerBackend.stop()
@@ -412,6 +410,9 @@ class esm:
         for th in self.threads:
             th.join()
         self.esmGPIO.__init__()
+
+        # Shutdown the serial ports
+        self.s.close()
 
     def __enter__(self):
         return self

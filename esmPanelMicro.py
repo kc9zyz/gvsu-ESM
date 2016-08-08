@@ -34,7 +34,7 @@ class panelThread(threading.Thread):
                 data = json.loads(str(message,'ascii'))
                 # Update the panel variables with the received information 
                 try:
-                    self.panelMicro.location = (data['lat'], data['long'])
+                    self.panelMicro.location = (data['lat'] / 1000000, data['long'] / 1000000)
                     self.panelMicro.update = True
                 except KeyError:
                     pass
