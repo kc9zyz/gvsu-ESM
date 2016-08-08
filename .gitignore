@@ -5,3 +5,4 @@ myenv
 .noseids
 *.csv
 private_key.pem
+*.pyc

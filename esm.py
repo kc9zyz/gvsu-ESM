@@ -60,6 +60,11 @@ class updateHolder:
                 return False
         return True
 
+    def clear(self):
+        for a in self.updates:
+            self.updates[a] = False
+
+
 # Responsible for all the functions of the educational solar module
 class esm:
 
@@ -209,10 +214,15 @@ class esm:
 
     # Send an update when ready
     def sendUpdate(self):
-        if self.webInterface.sendUpdate(self.dp).status_code == 200:
+        resp = self.webInterface.sendUpdate(self.dp)
+        if resp.status_code == 200:
+            self.dprint(ps.main, 'Update successful')
             self.webInterface.flushBacklog()
-        for a in update.updates:
-            update.updates[a] = False
+        else:
+            self.dprint(ps.main, 'Update failed: '+ str(resp))
+
+        # Clear the updated parameters
+        self.update.clear()
 
     def ledThread(self,queue):
         time.sleep(5)
@@ -227,7 +237,7 @@ class esm:
 
     def mainThread(self,queue):
         self.dprint(ps.main, 'Main Thread Started')
-        update  = updateHolder()
+        self.update  = updateHolder()
         while not self.exitAllThreads:
             try:
                 item = queue.get(True,1)
@@ -235,12 +245,12 @@ class esm:
                 if item[0] == em.dcLoadPanel:
                     # Update the panel data
                     self.dp.panelOutput = item[1]
-                    update.updates['panelReady'] = True
+                    self.update.updates['panelReady'] = True
 
                 elif item[0] == em.dcLoadShingle:
                     # Update the shingle data
                     self.dp.shingleOutput = item[1]
-                    update.updates['shingleReady'] = True
+                    self.update.updates['shingleReady'] = True
 
 
                 elif item[0] == em.dcLoadError:
@@ -253,7 +263,7 @@ class esm:
                     self.dp.timestamp = datetime.datetime.now()
                     self.dp.heading = self.pm.heading
                     self.dp.panelAngle = self.pm.pitch
-                    update.updates['panelUpdateReady'] = True
+                    self.update.updates['panelUpdateReady'] = True
 
                     # Update the trailer backend
                     if self.dp.panelAngle < 5:
@@ -276,7 +286,8 @@ class esm:
                     esmTrailerBackend.update(boxTemp=math.floor(item[1]))
 
 
-                if update.ready():
+                if self.update.ready():
+                    self.dprint(ps.main, 'Sending Update')
                     # Data point is ready, send
                     self.sendUpdate()
 
@@ -323,6 +334,7 @@ class esm:
         # Setup the GPIO driver
         self.esmGPIO = esmGPIO.esmGPIO()
 
+        print(serverPass)
         # Setup the web interface
         self.webInterface = esmWebInterface.esmWebInterface('http://cis.gvsu.edu/~neusonw/solar/data/',serverPass)
 
@@ -356,6 +368,9 @@ class esm:
         # Setup the ADC
         self.adc = esmADC.esmADC()
 
+        # Create the datapoint
+        self.dp = esmWebInterface.esmDataPoint()
+
         # Setup battery level reporting
         self.batteryLevel = 100
 
@@ -380,8 +395,6 @@ class esm:
         for th in self.threads:
             th.start()
 
-        # Create the datapoint
-        self.dp = esmWebInterface.esmDataPoint()
 
 
     def shutdown(self):

@@ -61,7 +61,7 @@ class esmWebInterface:
                 point = pickle.load(afile)
 
                 # Try to send data to server
-                res = self.sendUpdate(point)
+                res = self.sendUpdate(point, True)
 
                 # Check to see if request succeeded
                 if res.status_code == 200:
@@ -74,7 +74,7 @@ class esmWebInterface:
 
         return (numFiles,res)
 
-    def sendUpdate(self, dataPoint):
+    def sendUpdate(self, dataPoint, fromBack=False):
         # Save the python timestamp, convert to string
         timestamp = dataPoint.timestamp
         dataPoint.timestamp = "'"+dataPoint.timestamp.strftime('%Y-%m-%d %H:%M:%S')+"'"
@@ -96,14 +96,16 @@ class esmWebInterface:
         except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
             self.backlog(dataPoint, m.hexdigest())
             return None
-        try:
-            r2 = requests.post('http://localhost/data' + '?asset=current-data',data = payload,timeout=2)
-        except:
-            pass
+        if not fromBack:
+            try:
+                r2 = requests.post('http://localhost/data' + '?asset=current-data',data = payload,timeout=2)
+            except:
+                pass
 
         # Return the result
         if r.status_code == 401:
-            self.backlog(dataPoint, m.hexdigest())
+            if not fromBack:
+                self.backlog(dataPoint, m.hexdigest())
         return r
 
     def connected(self):
