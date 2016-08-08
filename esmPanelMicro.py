@@ -114,14 +114,18 @@ class esmPanelMicro:
         # Save last data for reload
         try:
             with open('lastPoint','rb') as afile:
-                toPickle = pickle.load(afile)
+                try:
+                    toPickle = pickle.load(afile)
 
-                self.location = toPickle['location']
-                self.timestamp = toPickle['timestamp']
-                self.heading = toPickle['heading']
-                self.pitch = toPickle['pitch']
-                self.roll = toPickle['roll']
-                self.temp =  toPickle['temp']
+                    self.location = toPickle['location']
+                    self.timestamp = toPickle['timestamp']
+                    self.heading = toPickle['heading']
+                    self.pitch = toPickle['pitch']
+                    self.roll = toPickle['roll']
+                    self.temp =  toPickle['temp']
+                # Pickle file may be damaged, ignore it if so
+                except:
+                    pass
         except FileNotFoundError:
             # No previous points were saved
             pass
