@@ -115,6 +115,9 @@ class esmDCLoad:
         msg = bytearray('CURR 0A\n','ascii')
         serial.sendSerial(esmSerial.esmSerialPorts.electronicLoad,msg)
 
+        # Ensure that the process happens before the relay switches
+        time.sleep(1)
+
 
     def trackMPPT(self,serial, maxCurrent):
         # Make it easier to reference dprint
