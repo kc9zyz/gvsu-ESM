@@ -74,6 +74,7 @@ class esm:
             startTime = time.time()
             # Measure the panels
             self.esmGPIO.output(esmGPIO.dcLoadRelay,False)
+            time.sleep(0.5)
             result = self.dc.trackMPPT(self.s,10000)
             #
             # Check to see if the operation succeeded
@@ -83,7 +84,9 @@ class esm:
                 queue.put((em.dcLoadError,em.dcLoadPanel))
 
             # Measure the shingles
+            time.sleep(0.5)
             self.esmGPIO.input(esmGPIO.dcLoadRelay)
+            time.sleep(0.5)
             result = self.dc.trackMPPT(self.s,10000)
 
             # Check to see if the operation succeeded

@@ -133,51 +133,35 @@ class esmDCLoad:
         #
         # Set the current to 0
         current = 0
-        currentStepLevel = 500
+        currentStepLevel = 100
         maxP = 0
-        powerPoint = powerPointTrack()
-        for i in range(0,3):
-            sessionPoint = powerPointTrack()
+        sessionPoint = powerPointTrack()
 
-            while current <= maxCurrent :
-                if self.setCurrent(serial,current):
-                    return (True,0)
-                time.sleep(.5)
-                try:
-                    # Get the operating voltage
-                    sessionPoint.voltage.append(self.getVoltage(serial))
+        while current <= maxCurrent :
+            if self.setCurrent(serial,current):
+                return (True,0)
+            time.sleep(.5)
+            try:
+                # Get the operating voltage
+                sessionPoint.voltage.append(self.getVoltage(serial))
 
-                    # Get the operating current
-                    sessionPoint.current.append(self.getCurrent(serial))
+                # Get the operating current
+                sessionPoint.current.append(self.getCurrent(serial))
 
-                    # Get the operating power
-                    sessionPoint.power.append(self.getPower(serial))
-                except queue.Empty:
-                    dprint(ps.mppt,'No Response from DC Load')
-                    self.deactivateDevice(serial)
-                    return (False,0)
+                # Get the operating power
+                sessionPoint.power.append(self.getPower(serial))
+            except queue.Empty:
+                dprint(ps.mppt,'No Response from DC Load')
+                self.deactivateDevice(serial)
+                return (False,0)
 
-                current += currentStepLevel
-            powerPoint.add(sessionPoint)
+            current += currentStepLevel
 
-            # Find the index of the max power value
-            maxIdx = sessionPoint.power.index(max(sessionPoint.power))
-            maxCurr = int(sessionPoint.current[maxIdx] *1000)
-            dprint(ps.mppt, 'Max: '+str(maxCurr)+ 'A, MaxP: '+str(sessionPoint.power[maxIdx])+'W')
-            maxP = sessionPoint.power[maxIdx]
-
-            # Set up the next sweep
-            current = maxCurr - currentStepLevel
-            if current < 0:
-                current = 0
-            maxCurrent = maxCurr + currentStepLevel
-            currentStepLevel /=5
-
-            # Restart process
-            self.deactivateDevice(serial)
-            time.sleep(1)
-            self.prepareDevice(serial)
-
+        # Find the index of the max power value
+        maxIdx = sessionPoint.power.index(max(sessionPoint.power))
+        maxCurr = int(sessionPoint.current[maxIdx] *1000)
+        dprint(ps.mppt, 'Max: '+str(maxCurr)+ 'mA, MaxP: '+str(sessionPoint.power[maxIdx])+'W')
+        maxP = sessionPoint.power[maxIdx]
 
 
         self.deactivateDevice(serial)
