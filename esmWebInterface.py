@@ -98,7 +98,7 @@ class esmWebInterface:
             return None
         if not fromBack:
             try:
-                r2 = requests.post('http://localhost/data' + '?asset=current-data',data = payload,timeout=2)
+                r2 = requests.post('http://localhost/data/index.php/?asset=current-data',data = payload,timeout=2)
             except:
                 pass
 

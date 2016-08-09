@@ -320,7 +320,7 @@ class esm:
         output = (False,200)
 
         # Setup the debug print interface
-        self.p = esmPrint.esmPrint(False)
+        self.p = esmPrint.esmPrint(True)
         self.dprint = self.p.dprint
         self.dprint(ps.main, '')
         self.dprint(ps.main, '********************')
