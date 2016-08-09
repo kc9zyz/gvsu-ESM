@@ -27,6 +27,8 @@ ledSer = '/dev/serial/by-id/usb-Arduino__www.arduino.cc__0044_752373336363510131
 boxHighTemp = 105
 boxHighTempCancel = 95
 ledBrightness = 255
+panelArea = 1.95
+shingleArea = 0.408
 
 
 # Contains a list of warnings
@@ -247,12 +249,12 @@ class esm:
                 # Long handler if-else
                 if item[0] == em.dcLoadPanel:
                     # Update the panel data
-                    self.dp.panelOutput = item[1]
+                    self.dp.panelOutput = item[1] / panelArea
                     self.update.updates['panelReady'] = True
 
                 elif item[0] == em.dcLoadShingle:
                     # Update the shingle data
-                    self.dp.shingleOutput = item[1]
+                    self.dp.shingleOutput = item[1] / shingleArea
                     self.update.updates['shingleReady'] = True
 
 
