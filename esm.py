@@ -100,7 +100,7 @@ class esm:
             # Find the time it takes to run the algorithm
             execTime = time.time()-startTime
             startTime = time.time()
-            endTime = startTime + (60- execTime)
+            endTime = startTime + (300- execTime)
 
             # Wait 5 minutes, checking for exit every 2
             # Remove the execution time from the delay to remove drift
@@ -341,7 +341,7 @@ class esm:
 
         print(serverPass)
         # Setup the web interface
-        self.webInterface = esmWebInterface.esmWebInterface('http://cis.gvsu.edu/~neusonw/solar/data/',serverPass)
+        self.webInterface = esmWebInterface.esmWebInterface('http://egr.gvsu.edu/~esm/data/',serverPass)
 
         # Setup the panel micro
         self.pm = esmPanelMicro.esmPanelMicro(self.p)
