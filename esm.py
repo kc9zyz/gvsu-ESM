@@ -339,7 +339,6 @@ class esm:
         # Setup the GPIO driver
         self.esmGPIO = esmGPIO.esmGPIO()
 
-        print(serverPass)
         # Setup the web interface
         self.webInterface = esmWebInterface.esmWebInterface('http://egr.gvsu.edu/~esm/data/',serverPass)
 
