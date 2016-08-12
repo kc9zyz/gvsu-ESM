@@ -2,13 +2,13 @@
 def batteryLevel(adc):
     level = adc.read()[1]
 
-    if level > 37:
+    if level > 38:
         return (100,level)
-    elif level > 36:
+    elif level > 37.2:
         return (75,level)
-    elif level > 35:
+    elif level > 36.6:
         return (50,level)
-    elif level > 34:
+    elif level > 36:
         return (25,level)
     else:
         return (0,level)

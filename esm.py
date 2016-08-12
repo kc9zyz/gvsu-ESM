@@ -29,6 +29,8 @@ boxHighTempCancel = 95
 ledBrightness = 255
 panelArea = 1.95
 shingleArea = 0.408
+windHigh = 15
+windCrit = 25
 
 
 # Contains a list of warnings
@@ -159,7 +161,7 @@ class esm:
         while not self.exitAllThreads:
             speed = esmAnemometer.windspeed(self.adc)
             queue.put((em.anemometer,speed))
-            if speed > 40:
+            if speed > windCrit:
                 warnings['windCrit'][1] = True
                 self.esmLed.showRed()
                 # Wind overspeed detected!
@@ -178,7 +180,7 @@ class esm:
                         time.sleep(1)
                     self.esmGPIO.input(esmGPIO.retractRelay)
             # Check if windspeed exceeds high threshold
-            elif speed > 25:
+            elif speed > windHigh:
                 warnings['windHigh'][1] = True
                 warnings['windCrit'][1] = False
                 self.esmLed.showRed()
