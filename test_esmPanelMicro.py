@@ -16,12 +16,6 @@ class TestPMMethods(unittest.TestCase):
         time.sleep(0.02);
         self.assertEqual(pm.location,(42.964055,-85.677421))
 
-
-        for c in '{"heading" : 170.0}\n':
-            pm.respQ.put(c.encode('ascii'))
-        time.sleep(0.02);
-        self.assertEqual(pm.heading,170)
-
         for c in '{"pitch" : 17.0}\n':
             pm.respQ.put(c.encode('ascii'))
         time.sleep(0.02);
@@ -41,6 +35,11 @@ class TestPMMethods(unittest.TestCase):
             pm.respQ.put(c.encode('ascii'))
         time.sleep(0.02);
         self.assertEqual(pm.timestamp,datetime.datetime(2016,6,21,1,12,00))
+
+        for c in '{"mx" : -48, "my" : 2188}\n':
+            pm.respQ.put(c.encode('ascii'))
+        time.sleep(0.02);
+        self.assertEqual(pm.heading,352)
     def tearDown(self):
         self.pm.close()
 

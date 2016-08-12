@@ -35,17 +35,18 @@ windCrit = 25
 
 # Contains a list of warnings
 warnings = {
-        'battCrit' : ['Battery Critical ' , False],
-        'windHigh' : ['High Wind ', False],
-        'windCrit' : ['Critical Wind ', False],
-        'tempCrit' : ['Critical Temperature ', False],
+        'battCrit' : ['Battery Critical - ' , False],
+        'windHigh' : ['High Wind - ', False],
+        'windCrit' : ['Critical Wind - ', False],
+        'tempCrit' : ['Critical Temperature - ', False],
         }
 
 # Contains a list of messages
 messages = {
-        'notDeployed' : ['System Not Deployed ' , False],
-        'boxWarm' : ['Electrical box is warm ' , False],
-        'battLow' : ['Battery Low ' , False],
+        'notDeployed' : ['System Not Deployed - ' , False],
+        'boxWarm' : ['Electrical box is warm - ' , False],
+        'battLow' : ['Battery Low - ' , False],
+        'dcLoadIssue' : ['DC Load Issue - ' , False],
         }
 
 class updateHolder:
@@ -253,15 +254,18 @@ class esm:
                     # Update the panel data
                     self.dp.panelOutput = item[1] / panelArea
                     self.update.updates['panelReady'] = True
+                    messages['dcLoadIssue'][1] = False
 
                 elif item[0] == em.dcLoadShingle:
                     # Update the shingle data
                     self.dp.shingleOutput = item[1] / shingleArea
                     self.update.updates['shingleReady'] = True
+                    messages['dcLoadIssue'][1] = False
 
 
                 elif item[0] == em.dcLoadError:
                     self.dprint(ps.main, 'DC load issue with: '+item[1].name)
+                    messages['dcLoadIssue'][1] = True
 
                 elif item[0] == em.panelUpdate:
                     # Update the data point

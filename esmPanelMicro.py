@@ -8,6 +8,12 @@ import threading
 import json
 import sys
 import pickle
+import math
+
+# Set the magnetic declination of the location the trailer will be in
+declination = 5.95
+mxOffset = 0
+myOffset = 0
 
 class panelThread(threading.Thread):
 
@@ -40,14 +46,42 @@ class panelThread(threading.Thread):
                     pass
 
                 try:
-                    self.panelMicro.heading = data['heading']
-                    self.panelMicro.update = True
+                    # Get raw magnetometer data
+                    mx = data['mx']
+                    my = data['my']
+
+                    # Apply magnetometer offset
+                    mx += mxOffset
+                    my += myOffset
+
+                    if my == 0:
+                        if mx < 0:
+                            self.panelMicro.heading = 180
+                        else:
+                            self.panelMicro.heading = 0
+                    else:
+                        self.panelMicro.heading = math.atan(mx/my)
+
+                    self.panelMicro.heading -= declination * math.pi / 180
+
+                    if self.panelMicro.heading > math.pi:
+                        self.panelMicro.heading -= 2 * math.pi
+                    elif self.panelMicro.heading < -math.pi:
+                        self.panelMicro.heading += 2 * math.pi
+                    elif self.panelMicro.heading < 0:
+                        self.panelMicro.heading += 2 * math.pi
+
+                    self.panelMicro.heading *= 180/math.pi
+                    self.panelMicro.heading = math.floor(self.panelMicro.heading)
+
+
+
                 except KeyError:
                     pass
 
                 try:
                     self.panelMicro.pitch = data['pitch']
-                    self.panelMicro.pitch = -self.panelMicro.pitch 
+                    self.panelMicro.pitch = -self.panelMicro.pitch
                     self.panelMicro.update = True
                 except KeyError:
                     pass

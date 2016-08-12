@@ -127,16 +127,17 @@ void getIMU()
   // Compute the roll and pitch from the imu data
   float roll = atan2(imu.ay, imu.az);
   float pitch = atan2(-imu.ax, sqrt(imu.ay * imu.ay + imu.az * imu.az));
+ 
 
   // Apply Magnetometer offset
-  imu.mx -= 955;
-  imu.my -= 1392;
-  imu.mz += 594;
+//  imu.mx -= 955;
+//  imu.my -= 1392;
+//  imu.mz += 594;
 
   // Compute the heading from IMU data
   float heading;
   if (imu.my == 0)
-    heading = (imu.mx < 0) ? 180.0 : 0;
+    heading = (imu.mx < 0) ? PI : 0;
   else
     heading = atan2(imu.mx, imu.my);
 
@@ -162,7 +163,16 @@ void getIMU()
   Uart2.print(", ");
   Uart2.print("\"heading\":");
   Uart2.print(heading, 2);
-  Uart2.print("}\n");
+  Uart2.print(", ");
+  Uart2.print("\"mx\":");
+  Uart2.print(imu.mx);
+  Uart2.print(", ");
+  Uart2.print("\"my\":");
+  Uart2.print(imu.my);
+  Uart2.print(", ");
+  Uart2.print("\"mz\":");
+  Uart2.print(imu.mz);
+  Uart2.print("}\r\n");
 
 }
 
@@ -266,7 +276,7 @@ void getTemp()
   // Report the results
   Uart2.print("{\"temp\":");
   Uart2.print(fahrenheit, 2);
-  Uart2.print("}\n");
+  Uart2.print("}\r\n");
 }
 
 // Handle the GPS data
@@ -297,5 +307,5 @@ void gpsdump(TinyGPS &gps)
   Uart2.print(", ");
   Uart2.print("\"time\":");
   Uart2.print(time);
-  Uart2.print("}\n");
+  Uart2.print("}\r\n");
 }
