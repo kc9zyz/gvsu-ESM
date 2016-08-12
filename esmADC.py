@@ -4,6 +4,7 @@ try:
 except ImportError:
     import esmMocksmbus as smbus
 import time
+import statistics
 
 MODECNTRL = 0x00
 idle = 0x00
@@ -24,6 +25,9 @@ chan0Scale = 1
 chan1Scale = 10.19
 chan2Scale = 1
 
+# Set the VREF level
+v5v = 5.33
+
 class esmADC:
     def __init__(self):
         self.bus = smbus.SMBus(1)
@@ -38,28 +42,37 @@ class esmADC:
                 pass
 
     def read(self):
+        chan0l = []
+        chan1l = []
+        chan2l = []
         for i in range (0,5):
             try:
-                time.sleep(0.01)
+                time.sleep(0.1)
                 self.bus.write_byte_data(self.address,MODECNTRL,idle)
                 chan0 = self.bus.read_byte_data(self.address,DATA0_U) << 4
                 chan0 = chan0 + (self.bus.read_byte_data(self.address,DATA0_L) >> 4)
-                chan0 = chan0 * (5/4096)
+                chan0 = chan0 * (v5v/4096)
                 chan0 *= chan0Scale
 
                 chan1 = self.bus.read_byte_data(self.address,DATA1_U) << 4
                 chan1 = chan1 + (self.bus.read_byte_data(self.address,DATA1_L) >> 4)
-                chan1 = chan1 * (5/4096)
+                chan1 = chan1 * (v5v/4096)
                 chan1 *= chan1Scale
 
                 chan2 = self.bus.read_byte_data(self.address,DATA2_U) << 4
                 chan2 = chan2 + (self.bus.read_byte_data(self.address,DATA2_L) >> 4)
-                chan2 = chan2 * (5/4096)
+                chan2 = chan2 * (v5v/4096)
                 chan2 *= chan2Scale
 
+                chan0l.append(chan0)
+                chan1l.append(chan1)
+                chan2l.append(chan2)
+
                 self.bus.write_byte_data(self.address,MODECNTRL,auto_scan)
-                return (chan0,chan1,chan2)
             except:
                 pass
 
-        return (0,0,0)
+        if len(chan0l):
+            return (statistics.mean(chan0l),statistics.mean(chan1l),statistics.mean(chan2l))
+        else:
+            return (0,0,0)
