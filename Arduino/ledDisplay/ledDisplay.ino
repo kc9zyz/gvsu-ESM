@@ -252,7 +252,23 @@ void runLevel(int level, int brightness)
 
   
 }
-  static char mode = 'r';
+void runFadeOut(void)
+{
+  uint8_t i,j;
+  for(i=0;i<200;i++)
+  {
+    for(j=0;j<NUM_LEDS;j++)
+    {
+      // Fade light by 5% each iteration
+      leds[j].fadeToBlackBy(10);
+    }
+    FastLED.show();
+    delay(10);     
+  }
+  delay(1000);
+  
+}
+  static char mode = 'b';
   static int param1 = 255;
   static int param2 = 255;
 void loop() { 
@@ -261,6 +277,7 @@ void loop() {
 
   
   str = Serial.readString();
+ 
   // Wait for a valid string
   if(str[0])
   {
@@ -282,6 +299,8 @@ void loop() {
   }
   // Play the sequence
   Serial.print(mode);
+   // Fade out the last sequence
+  runFadeOut();
   switch(mode)
   {
     case 'b':

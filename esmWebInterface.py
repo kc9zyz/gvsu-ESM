@@ -17,6 +17,8 @@ class esmDataPoint:
         self.lon = 0
         self.heading = 0
         self.panelAngle = 0
+        self.boxTemp = 0
+        self.windSpeed = 0
 
 class esmWebInterface:
     def __init__(self, host, key):

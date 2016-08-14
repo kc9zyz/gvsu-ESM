@@ -289,12 +289,14 @@ class esm:
 
                 elif item[0] == em.anemometer:
                     esmTrailerBackend.update(windspeed=item[1])
+                    self.dp.windSpeed = item[1]
 
                 elif item[0] == em.battery:
                     esmTrailerBackend.update(battery=item[1])
 
                 elif item[0] == em.boxTemp:
                     esmTrailerBackend.update(boxTemp=math.floor(item[1]))
+                    self.dp.boxTemp = math.floor(item[1])
 
 
                 if self.update.ready():
