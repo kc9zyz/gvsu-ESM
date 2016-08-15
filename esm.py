@@ -268,6 +268,10 @@ class esm:
                     self.dprint(ps.main, 'DC load issue with: '+item[1].name)
                     messages['dcLoadIssue'][1] = True
 
+                    # This is a fatal issue, requires an exit and restart by 
+                    # process manager
+                    self.exitAllThreads = True
+
                 elif item[0] == em.panelUpdate:
                     # Update the data point
                     self.dp.lat = self.pm.location[0]
@@ -294,6 +298,7 @@ class esm:
 
                 elif item[0] == em.battery:
                     esmTrailerBackend.update(battery=item[1])
+                    self.dp.batteryLevel = item[1]
 
                 elif item[0] == em.boxTemp:
                     esmTrailerBackend.update(boxTemp=math.floor(item[1]))
@@ -412,8 +417,6 @@ class esm:
 
     def shutdown(self):
 
-        # Shutdown the trailer backend
-        esmTrailerBackend.stop()
 
         # close the panel micro
         self.pm.close()
@@ -426,6 +429,9 @@ class esm:
 
         # Shutdown the serial ports
         self.s.close()
+
+        # Shutdown the trailer backend
+        esmTrailerBackend.stop()
 
     def __enter__(self):
         return self

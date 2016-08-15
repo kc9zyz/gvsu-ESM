@@ -150,10 +150,16 @@ class esmDCLoad:
 
                 # Get the operating power
                 sessionPoint.power.append(self.getPower(serial))
+
+                # Stop the tracking algorithm once the voltage and power drop
+                if sessionPoint.voltage[-1] == 0 and sessionPoint.power[-1] == 0:
+                    break
+
+
             except queue.Empty:
                 dprint(ps.mppt,'No Response from DC Load')
                 self.deactivateDevice(serial)
-                return (False,0)
+                return (True,0)
 
             current += currentStepLevel
 
