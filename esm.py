@@ -227,7 +227,8 @@ class esm:
             self.dprint(ps.main, 'Update successful')
             self.webInterface.flushBacklog()
         else:
-            self.dprint(ps.main, 'Update failed: '+ str(resp))
+            self.dprint(ps.main, 'Update failed: '+ str(resp.status_code))
+            self.dprint(ps.main, str(resp.text))
 
         # Clear the updated parameters
         self.update.clear()

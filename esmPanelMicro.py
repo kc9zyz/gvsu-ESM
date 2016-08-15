@@ -12,8 +12,8 @@ import math
 
 # Set the magnetic declination of the location the trailer will be in
 declination = 5.95
-mxOffset = 0
-myOffset = 0
+mxOffset = 1900
+myOffset = -1900
 
 class panelThread(threading.Thread):
 
