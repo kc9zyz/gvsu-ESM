@@ -57,7 +57,7 @@ class TestDCLoadMethods(unittest.TestCase):
         self.s = esmSerial.esmSerial(p,serPorts)
 
         self.assertTrue(dc.trackMPPT(None,500)[0])
-        self.assertFalse(dc.trackMPPT(self.s,500)[0])
+        self.assertTrue(dc.trackMPPT(self.s,500)[0])
     def tearDown(self):
         if self.s is not None:
             self.s.close()

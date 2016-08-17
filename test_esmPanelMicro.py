@@ -39,7 +39,7 @@ class TestPMMethods(unittest.TestCase):
         for c in '{"mx" : -48, "my" : 2188}\n':
             pm.respQ.put(c.encode('ascii'))
         time.sleep(0.02);
-        self.assertEqual(pm.heading,352)
+        self.assertEqual(pm.heading,75)
     def tearDown(self):
         self.pm.close()
 

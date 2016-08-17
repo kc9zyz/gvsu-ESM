@@ -25,6 +25,7 @@ pmSer = '/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller
 ledSer = '/dev/serial/by-id/usb-Arduino__www.arduino.cc__0044_752373336363510131A2-if00'
 
 boxHighTemp = 105
+boxCritTemp = 125
 boxHighTempCancel = 95
 ledBrightness = 255
 panelArea = 1.95
@@ -144,14 +145,20 @@ class esm:
                 self.fanMode = False
                 messages['boxWarm'][1] = False
                 self.esmGPIO.input(esmGPIO.fanRelay)
+            if temp > boxCritTemp:
+                warnings['tempCrit'][1] = True
+            else:
+                warnings['tempCrit'][1] = False
+
+
             time.sleep(5)
 
         self.dprint(ps.main, 'Temperature thread Exiting')
 
 
-    def soundAlarm(self):
+    def soundAlarm(self, number):
         # Cycle the alarm on 1 second chirps
-        for i in range(0,10):
+        for i in range(0,number):
             self.esmGPIO.output(esmGPIO.buzzerRelay,False)
             time.sleep(1)
             self.esmGPIO.input(esmGPIO.buzzerRelay)
@@ -171,14 +178,14 @@ class esm:
 
                     self.dprint(ps.main, 'Wind Speed CRITICAL')
                     # Sound alarm
-                    self.soundAlarm()
+                    self.soundAlarm(10)
 
                     # Retract panels
                     self.esmGPIO.output(esmGPIO.retractRelay,False)
                     timeout = 0
                     while self.dp.panelAngle > 10 or timeout > 120:
-                        timeout += 1
-                        time.sleep(1)
+                        timeout += 2
+                        self.soundAlarm(1)
                     self.esmGPIO.input(esmGPIO.retractRelay)
             # Check if windspeed exceeds high threshold
             elif speed > windHigh:
